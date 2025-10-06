@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreUserRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize()
+    {
+        return auth()->check() && auth()->user()->role === 'admin';
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     */
+    public function rules()
+    {
+        return [
+            'username' => ['required', 'string', 'max:50', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:100', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'first_name' => ['required', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:50'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'role' => ['required', Rule::in(['admin', 'manager', 'cashier'])],
+            'is_active' => ['boolean'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages()
+    {
+        return [
+            'username.required' => 'Username is required.',
+            'username.unique' => 'This username is already taken.',
+            'email.required' => 'Email address is required.',
+            'email.unique' => 'This email address is already registered.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'first_name.required' => 'First name is required.',
+            'last_name.required' => 'Last name is required.',
+            'role.required' => 'User role is required.',
+            'role.in' => 'Selected role is invalid.',
+        ];
+    }
+}

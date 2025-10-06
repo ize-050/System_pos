@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Debug Vue.js</title>
+</head>
+<body>
+    <h1>Debug Page</h1>
+    <script>
+        console.log('Debug page loaded');
+        
+        // Check if Vue is available
+        fetch('http://localhost:5173/resources/js/app.js')
+            .then(response => response.text())
+            .then(data => {
+                console.log('App.js loaded:', data.substring(0, 200));
+            })
+            .catch(error => {
+                console.error('Error loading app.js:', error);
+            });
+            
+        // Check if Welcome component is available
+        fetch('http://localhost:5173/resources/js/Pages/Welcome.vue')
+            .then(response => response.text())
+            .then(data => {
+                console.log('Welcome.vue loaded:', data.substring(0, 200));
+            })
+            .catch(error => {
+                console.error('Error loading Welcome.vue:', error);
+            });
+    </script>
+</body>
+</html>

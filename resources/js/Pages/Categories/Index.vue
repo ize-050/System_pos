@@ -1,0 +1,363 @@
+<template>
+  <AppLayout title="จัดการหมวดหมู่สินค้า">
+    <template #header>
+      <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        จัดการหมวดหมู่สินค้า
+      </h2>
+    </template>
+
+    <div class="py-12">
+      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="p-6 bg-white border-b border-gray-200">
+            <!-- Header -->
+            <div class="mb-6 flex justify-between items-center">
+              <h1 class="text-2xl font-bold text-gray-900">จัดการหมวดหมู่สินค้า</h1>
+              <div class="flex gap-2">
+                <!-- Download Template Button -->
+                <button 
+                  @click="downloadTemplate"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest transition ease-in-out duration-150 hover:bg-gray-50"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  ดาวน์โหลด Template
+                </button>
+                
+                <!-- Import Excel Button -->
+                <button 
+                  @click="importExcel"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest transition ease-in-out duration-150 hover:bg-gray-50"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                  </svg>
+                  นำเข้า Excel
+                </button>
+                
+                <!-- Add Category Button -->
+                <Link :href="route('categories.create')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest transition ease-in-out duration-150"
+                    style="background-color: #6B7B47; border-color: #6B7B47;"
+                    onmouseover="this.style.backgroundColor='#8A9B5A'"
+                    onmouseout="this.style.backgroundColor='#6B7B47'">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  เพิ่มหมวดหมู่ใหม่
+                </Link>
+                
+                <!-- Hidden file input -->
+                <input 
+                  ref="fileInput" 
+                  type="file" 
+                  accept=".xlsx,.xls" 
+                  @change="handleFileUpload" 
+                  class="hidden"
+                />
+              </div>
+            </div>
+
+            <!-- Search and Filter Section -->
+            <div class="mb-6 flex flex-col sm:flex-row gap-4">
+              <!-- Search -->
+              <div class="flex-1">
+                <input
+                  v-model="form.search"
+                  @input="search"
+                  type="text"
+                  placeholder="ค้นหาหมวดหมู่..."
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none transition ease-in-out duration-150"
+                  style="border-color: #E2E8F0;"
+                  onfocus="this.style.borderColor='#6B7B47'; this.style.boxShadow='0 0 0 3px rgba(107, 123, 71, 0.2)'"
+                  onblur="this.style.borderColor='#E2E8F0'; this.style.boxShadow='none'"
+                />
+              </div>
+
+              <!-- Status Filter -->
+              <div class="w-full sm:w-48">
+                <select
+                  v-model="form.status"
+                  @change="search"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none transition ease-in-out duration-150"
+                  style="border-color: #E2E8F0;"
+                  onfocus="this.style.borderColor='#6B7B47'; this.style.boxShadow='0 0 0 3px rgba(107, 123, 71, 0.2)'"
+                  onblur="this.style.borderColor='#E2E8F0'; this.style.boxShadow='none'"
+                >
+                  <option value="">สถานะทั้งหมด</option>
+                  <option value="active">ใช้งาน</option>
+                  <option value="inactive">ไม่ใช้งาน</option>
+                </select>
+              </div>
+
+              <!-- Clear Filters -->
+              <button
+                @click="clearFilters"
+                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Clear
+              </button>
+            </div>
+
+            <!-- Categories Table -->
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อหมวดหมู่</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">คำอธิบาย</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนสินค้า</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่สร้าง</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">การจัดการ</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="category in (categories?.data || [])" :key="category.id" class="hover:bg-gray-50">
+                    <!-- Category Info -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12">
+                          <div v-if="category.image_url" class="h-12 w-12 rounded-lg overflow-hidden border border-gray-300">
+                            <img :src="category.image_url" :alt="category.name" class="h-full w-full object-cover">
+                          </div>
+                          <div v-else class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center border border-gray-300">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="ml-4">
+                          <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Description -->
+                    <td class="px-6 py-4">
+                      <div class="text-sm text-gray-900 max-w-xs truncate" :title="category.description">
+                        {{ category.description || 'ไม่มีคำอธิบาย' }}
+                      </div>
+                    </td>
+
+                    <!-- Products Count -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="text-sm text-gray-900">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {{ category.products_count }} สินค้า
+                        </span>
+                      </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            :class="getStatusClass(category.is_active)">
+                        {{ category.is_active ? 'ใช้งาน' : 'ไม่ใช้งาน' }}
+                      </span>
+                    </td>
+
+                    <!-- Created Date -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ formatDate(category.created_at) }}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div class="flex items-center space-x-2">
+                        <Link :href="route('categories.show', category.id)" class="text-blue-600 hover:text-blue-900 mr-3">
+                          ดู
+                        </Link>
+                        <Link :href="route('categories.edit', category.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                          แก้ไข
+                        </Link>
+                        <button @click="deleteCategory(category)" class="text-red-600 hover:text-red-900">
+                          ลบ
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="(categories?.data || []).length === 0" class="text-center py-12">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">ไม่พบหมวดหมู่สินค้า</h3>
+              <p class="mt-1 text-sm text-gray-500">เริ่มต้นด้วยการสร้างหมวดหมู่สินค้าใหม่</p>
+              <div class="mt-6">
+                <Link :href="route('categories.create')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest transition ease-in-out duration-150"
+                      style="background-color: #6B7B47; border-color: #6B7B47;"
+                      onmouseover="this.style.backgroundColor='#8A9B5A'"
+                      onmouseout="this.style.backgroundColor='#6B7B47'">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  เพิ่มหมวดหมู่
+                </Link>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="(categories?.data || []).length > 0" class="mt-6">
+              <Pagination :links="categories?.links || []" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+
+<script>
+import { Head, Link } from '@inertiajs/vue3'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import { reactive, watch, onMounted, ref } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
+import { debounce } from 'lodash'
+import Pagination from '@/Components/Pagination.vue'
+import toastStore from '@/Stores/toastStore'
+
+export default {
+  components: {
+    Head,
+    Link,
+    Pagination,
+  },
+  props: {
+    categories: Object,
+    filters: Object,
+  },
+  setup(props) {
+    const page = usePage()
+    const fileInput = ref(null)
+
+    const form = reactive({
+      search: props.filters?.search || '',
+      status: props.filters?.status || '',
+    })
+
+    // Show toast notifications based on flash messages
+    onMounted(() => {
+      if (page.props.flash?.success) {
+        toastStore.success(page.props.flash.success)
+      }
+
+      if (page.props.flash?.error) {
+        toastStore.error(page.props.flash.error)
+      }
+    })
+
+    // Debounced search
+    const debouncedSearch = debounce(() => {
+      router.get(route('categories.index'), form, {
+        preserveState: true,
+        replace: true,
+      })
+    }, 300)
+
+    watch(() => form.search, debouncedSearch)
+    watch(() => form.status, () => {
+      router.get(route('categories.index'), form, {
+        preserveState: true,
+        replace: true,
+      })
+    })
+
+    const clearFilters = () => {
+      form.search = ''
+      form.status = ''
+      router.get(route('categories.index'))
+    }
+
+    const getStatusClass = (isActive) => {
+      return isActive
+        ? 'bg-green-100 text-green-800'
+        : 'bg-red-100 text-red-800'
+    }
+
+    const formatDate = (date) => {
+      if (!date) return 'ไม่ระบุ'
+      try {
+        return new Date(date).toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+      } catch (error) {
+        return 'ไม่ระบุ'
+      }
+    }
+
+    const search = () => {
+      debouncedSearch()
+    }
+
+    // Excel import/export functions
+    const downloadTemplate = () => {
+      window.location.href = route('categories.template.download')
+    }
+
+    const importExcel = () => {
+      fileInput.value.click()
+    }
+
+    const handleFileUpload = (event) => {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      router.post(route('categories.import'), formData, {
+        onSuccess: () => {
+          toastStore.success('นำเข้าข้อมูลหมวดหมู่สำเร็จ')
+          fileInput.value.value = ''
+        },
+        onError: (errors) => {
+          if (errors.file) {
+            toastStore.error(errors.file)
+          } else {
+            toastStore.error('เกิดข้อผิดพลาดในการนำเข้าข้อมูล')
+          }
+          fileInput.value.value = ''
+        }
+      })
+    }
+
+    const deleteCategory = (category) => {
+      if (category.products_count > 0) {
+        toastStore.error(`ไม่สามารถลบ "${category.name}" ได้ เนื่องจากมีสินค้า ${category.products_count} รายการ กรุณาย้ายหรือลบสินค้าก่อน`)
+        return
+      }
+
+      if (confirm(`คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่ "${category.name}"? การกระทำนี้ไม่สามารถยกเลิกได้`)) {
+        router.delete(route('categories.destroy', category.id), {
+          onSuccess: () => {
+            toastStore.crud.deleted('หมวดหมู่')
+          },
+          onError: (errors) => {
+            toastStore.crud.deleteError('หมวดหมู่')
+          }
+        })
+      }
+    }
+
+    return {
+      form,
+      clearFilters,
+      getStatusClass,
+      formatDate,
+      search,
+      fileInput,
+      downloadTemplate,
+      importExcel,
+      handleFileUpload,
+      deleteCategory,
+    }
+  },
+}
+</script>
