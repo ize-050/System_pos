@@ -19,7 +19,7 @@ class SaleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Sale::with(['cashier', 'saleItems.product', 'promotion'])
+        $query = Sale::with(['cashier', 'customer', 'saleItems.product', 'promotion'])
             ->orderBy('created_at', 'desc');
 
         // Search functionality
@@ -165,7 +165,7 @@ class SaleController extends Controller
      */
     public function show(Sale $sale)
     {
-        $sale->load(['cashier', 'saleItems.product.category', 'promotion']);
+        $sale->load(['cashier', 'customer', 'saleItems.product.category', 'promotion']);
 
         return Inertia::render('Sales/Show', [
             'sale' => $sale,
@@ -177,13 +177,13 @@ class SaleController extends Controller
      */
     public function edit(Sale $sale)
     {
-        // Only allow editing of pending sales
-        if ($sale->status !== 'pending') {
+        // Only admin can edit completed sales
+        if ($sale->status === 'completed' && Auth::user()->role !== 'admin') {
             return redirect()->route('sales.show', $sale->id)
-                ->with('error', 'Only pending sales can be edited.');
+                ->with('error', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขรายการขายที่เสร็จสมบูรณ์ได้');
         }
 
-        $sale->load(['saleItems.product']);
+        $sale->load(['saleItems.product', 'customer']);
         $products = Product::with('category')
             ->where('is_active', true)
             ->orderBy('name')
@@ -200,9 +200,9 @@ class SaleController extends Controller
      */
     public function update(UpdateSaleRequest $request, Sale $sale)
     {
-        // Only allow updating of pending sales
-        if ($sale->status !== 'pending') {
-            return back()->withErrors(['error' => 'Only pending sales can be updated.']);
+        // Only admin can update completed sales
+        if ($sale->status === 'completed' && Auth::user()->role !== 'admin') {
+            return back()->withErrors(['error' => 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขรายการขายที่เสร็จสมบูรณ์ได้']);
         }
 
         try {
@@ -210,7 +210,18 @@ class SaleController extends Controller
 
             // Restore original stock quantities
             foreach ($sale->saleItems as $item) {
-                $item->product->increment('stock_quantity', $item->quantity);
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    $product->increment('current_stock', $item->quantity);
+                }
+            }
+
+            // If customer account payment, restore old outstanding balance
+            if ($sale->payment_method === 'customer_account' && $sale->customer_id) {
+                $customer = \App\Models\Customer::find($sale->customer_id);
+                if ($customer) {
+                    $customer->decrement('outstanding_balance', $sale->total_amount);
+                }
             }
 
             // Delete existing sale items
@@ -244,6 +255,7 @@ class SaleController extends Controller
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'customer_email' => $request->customer_email,
+                'customer_id' => $request->customer_id,
                 'subtotal' => $request->subtotal,
                 'tax_amount' => $request->tax_amount,
                 'discount_amount' => $request->discount_amount ?? 0,
@@ -260,8 +272,8 @@ class SaleController extends Controller
                 $product = Product::findOrFail($item['product_id']);
                 
                 // Check stock availability
-                if ($product->stock_quantity < $item['quantity']) {
-                    throw new \Exception("Insufficient stock for product: {$product->name}");
+                if ($product->current_stock < $item['quantity']) {
+                    throw new \Exception("สต็อกไม่เพียงพอสำหรับสินค้า: {$product->name}");
                 }
 
                 // Create sale item
@@ -274,17 +286,30 @@ class SaleController extends Controller
                 ]);
 
                 // Update product stock
-                $product->decrement('stock_quantity', $item['quantity']);
+                $product->decrement('current_stock', $item['quantity']);
+            }
+
+            // If customer account payment, add new outstanding balance
+            if ($request->payment_method === 'customer_account' && $request->customer_id) {
+                $customer = \App\Models\Customer::find($request->customer_id);
+                if ($customer) {
+                    // Check credit limit
+                    $availableCredit = $customer->credit_limit - $customer->outstanding_balance;
+                    if ($availableCredit < $request->total_amount) {
+                        throw new \Exception("วงเงินเครดิตไม่เพียงพอ มีวงเงินคงเหลือ: ฿" . number_format($availableCredit, 2));
+                    }
+                    $customer->increment('outstanding_balance', $request->total_amount);
+                }
             }
 
             DB::commit();
 
             return redirect()->route('sales.show', $sale->id)
-                ->with('success', 'Sale updated successfully!');
+                ->with('success', 'แก้ไขรายการขายสำเร็จ! สต็อกสินค้าได้รับการปรับปรุงแล้ว');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
         }
     }
 
@@ -293,17 +318,29 @@ class SaleController extends Controller
      */
     public function destroy(Sale $sale)
     {
-        // Only allow deletion of pending sales
-        if ($sale->status !== 'pending') {
-            return back()->withErrors(['error' => 'Only pending sales can be deleted.']);
+        // Only admin can delete completed sales
+        if ($sale->status === 'completed' && Auth::user()->role !== 'admin') {
+            return back()->withErrors(['error' => 'Only administrators can delete completed sales.']);
         }
 
         try {
             DB::beginTransaction();
 
-            // Restore stock quantities
+            // Restore stock quantities for all items
             foreach ($sale->saleItems as $item) {
-                $item->product->increment('stock_quantity', $item->quantity);
+                $product = Product::find($item->product_id);
+                if ($product) {
+                    // Return stock back
+                    $product->increment('current_stock', $item->quantity);
+                }
+            }
+
+            // If customer account payment, restore outstanding balance
+            if ($sale->payment_method === 'customer_account' && $sale->customer_id) {
+                $customer = \App\Models\Customer::find($sale->customer_id);
+                if ($customer) {
+                    $customer->decrement('outstanding_balance', $sale->total_amount);
+                }
             }
 
             // Delete sale items first
@@ -315,11 +352,11 @@ class SaleController extends Controller
             DB::commit();
 
             return redirect()->route('sales.index')
-                ->with('success', 'Sale deleted successfully!');
+                ->with('success', 'ลบรายการขายสำเร็จ! สต็อกสินค้าได้รับการคืนแล้ว');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
         }
     }
 
@@ -330,7 +367,7 @@ class SaleController extends Controller
     {
         $query = Product::with('category')
             ->where('is_active', true)
-            ->where('stock_quantity', '>', 0);
+            ->where('current_stock', '>', 0);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -344,7 +381,7 @@ class SaleController extends Controller
             });
         }
 
-        $products = $query->limit(20)->get();
+        $products = $query->orderBy('name')->limit(20)->get();
 
         return response()->json($products);
     }
@@ -354,10 +391,13 @@ class SaleController extends Controller
      */
     public function printReceipt(Sale $sale)
     {
-        $sale->load(['cashier', 'saleItems.product']);
+        $sale->load(['cashier', 'saleItems.product', 'customer']);
+
+        $settings = \App\Models\ReceiptSettings::getSettings();
 
         return Inertia::render('Sales/Receipt', [
             'sale' => $sale,
+            'settings' => $settings,
         ]);
     }
 }

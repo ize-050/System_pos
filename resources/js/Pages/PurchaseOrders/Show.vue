@@ -9,6 +9,11 @@
           <!-- Header สำหรับพิมพ์ -->
           <div class="print-header mb-8">
             <div class="text-center mb-6">
+              <!-- Logo -->
+              <div v-if="settings?.show_logo && logoUrl" class="mb-4 flex justify-center">
+                <img :src="logoUrl" alt="Shop Logo" class="h-20 object-contain" />
+              </div>
+              
               <h1 class="text-3xl font-bold text-gray-800 mb-2">ใบสั่งซื้อสินค้า</h1>
               <h2 class="text-xl text-gray-600">PURCHASE ORDER</h2>
             </div>
@@ -17,12 +22,15 @@
               <!-- ข้อมูลบริษัท -->
               <div class="border-2 border-gray-300 p-4 rounded">
                 <h3 class="font-bold text-lg mb-2 text-gray-700">จาก / FROM:</h3>
-                <p class="font-semibold text-lg">ร้านค้า POS</p>
-                <p class="text-sm text-gray-600">123 ถนนสุขุมวิท</p>
-                <p class="text-sm text-gray-600">แขวงคลองเตย เขตคลองเตย</p>
-                <p class="text-sm text-gray-600">กรุงเทพฯ 10110</p>
-                <p class="text-sm text-gray-600 mt-2">โทร: 02-123-4567</p>
-                <p class="text-sm text-gray-600">เลขประจำตัวผู้เสียภาษี: 0123456789012</p>
+                <p class="font-semibold text-lg">{{ settings?.shop_name || 'ร้านค้า POS' }}</p>
+                <p v-if="settings?.shop_address" class="text-sm text-gray-600">{{ settings.shop_address }}</p>
+                <template v-else>
+                  <p class="text-sm text-gray-600">123 ถนนสุขุมวิท</p>
+                  <p class="text-sm text-gray-600">แขวงคลองเตย เขตคลองเตย</p>
+                  <p class="text-sm text-gray-600">กรุงเทพฯ 10110</p>
+                </template>
+                <p v-if="settings?.shop_phone" class="text-sm text-gray-600 mt-2">โทร: {{ settings.shop_phone }}</p>
+                <p v-if="settings?.tax_id" class="text-sm text-gray-600">เลขประจำตัวผู้เสียภาษี: {{ settings.tax_id }}</p>
               </div>
               
               <!-- ข้อมูลซัพพลายเออร์ -->
@@ -189,9 +197,18 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { computed } from 'vue';
 
 const props = defineProps({
   purchaseOrder: Object,
+  settings: Object,
+});
+
+const logoUrl = computed(() => {
+  if (props.settings?.logo_path) {
+    return `/storage/${props.settings.logo_path}`;
+  }
+  return null;
 });
 
 const formatDate = (date) => new Date(date).toLocaleDateString('th-TH');

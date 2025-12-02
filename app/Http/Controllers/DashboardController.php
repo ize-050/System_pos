@@ -207,7 +207,7 @@ class DashboardController extends Controller
     public function inventoryReport(Request $request)
     {
         // Check authorization
-        if (!in_array(auth()->user()->role, ['admin', 'manager'])) {
+        if (!in_array(auth()->user()->role, ['admin', 'manager', 'accountant'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -229,8 +229,28 @@ class DashboardController extends Controller
 
         $inventoryData = $query->orderBy('current_stock', 'asc')->get();
 
-        return response()->json([
-            'inventory_data' => $inventoryData
+        // Get categories for filter
+        $categories = ProductCategory::orderBy('name')->get();
+
+        // Calculate summary
+        $totalProducts = Product::count();
+        $lowStockProducts = Product::whereRaw('current_stock <= reorder_point')->where('current_stock', '>', 0)->count();
+        $outOfStockProducts = Product::where('current_stock', '<=', 0)->count();
+        $totalStockValue = Product::selectRaw('SUM(current_stock * cost_price) as total_value')->value('total_value');
+
+        return Inertia::render('Reports/Inventory', [
+            'inventoryData' => $inventoryData,
+            'categories' => $categories,
+            'filters' => [
+                'category_id' => $categoryId,
+                'status' => $status,
+            ],
+            'summary' => [
+                'total_products' => $totalProducts,
+                'low_stock_products' => $lowStockProducts,
+                'out_of_stock_products' => $outOfStockProducts,
+                'total_stock_value' => $totalStockValue ?? 0,
+            ],
         ]);
     }
 
@@ -321,16 +341,38 @@ class DashboardController extends Controller
         // Sales trend data
         $salesTrend = $this->getSalesTrendData($startDate, $endDate, $analysisType);
 
+        // Top customers
+        $topCustomers = Sale::join('customers', 'sales.customer_id', '=', 'customers.id')
+            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereNotNull('sales.customer_id')
+            ->selectRaw('
+                customers.id,
+                customers.name,
+                customers.phone,
+                SUM(sales.total_amount) as total_spent,
+                COUNT(sales.id) as total_orders,
+                AVG(sales.total_amount) as avg_order_value,
+                MAX(sales.created_at) as last_purchase
+            ')
+            ->groupBy('customers.id', 'customers.name', 'customers.phone')
+            ->orderByDesc('total_spent')
+            ->limit(10)
+            ->get();
+
         return response()->json([
             'total_sales' => $totalSales,
+            'total_orders' => $totalOrders,
             'gross_profit' => $grossProfit,
+            'profit_margin' => $totalSales > 0 ? round(($grossProfit / $totalSales) * 100, 2) : 0,
             'total_customers' => $totalCustomers,
             'average_order_value' => $averageOrderValue,
+            'avg_order_value' => $averageOrderValue,
             'regular_customers' => $regularCustomers,
             'new_customers' => $newCustomers,
             'top_products' => $topProducts,
             'slow_products' => $slowProducts,
-            'sales_trend' => $salesTrend
+            'sales_trend' => $salesTrend,
+            'top_customers' => $topCustomers
         ]);
     }
 

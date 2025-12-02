@@ -20,9 +20,8 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => 'required|string|max:255|unique:product_categories,name',
             'description' => 'nullable|string|max:1000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_active' => 'boolean',
         ];
     }
@@ -37,9 +36,6 @@ class StoreCategoryRequest extends FormRequest
             'name.unique' => 'This category name already exists.',
             'name.max' => 'Category name cannot exceed 255 characters.',
             'description.max' => 'Description cannot exceed 1000 characters.',
-            'image.image' => 'The file must be an image.',
-            'image.mimes' => 'Image must be a file of type: jpeg, png, jpg, gif.',
-            'image.max' => 'Image size cannot exceed 2MB.',
         ];
     }
 }

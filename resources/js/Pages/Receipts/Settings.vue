@@ -20,6 +20,69 @@
               </div>
             </div>
 
+            <!-- Logo Upload -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-4">Shop Logo</h3>
+              <div class="space-y-4">
+                <!-- Current Logo Preview -->
+                <div v-if="currentLogoUrl" class="flex items-center gap-4">
+                  <div class="relative">
+                    <img :src="currentLogoUrl" alt="Current Logo" class="h-24 w-24 object-contain border border-gray-300 rounded-lg p-2 bg-white" />
+                    <button
+                      type="button"
+                      @click="removeLogo"
+                      class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="text-sm text-gray-600">
+                    <p class="font-medium">Current Logo</p>
+                    <p class="text-xs">Click X to remove</p>
+                  </div>
+                </div>
+
+                <!-- New Logo Preview -->
+                <div v-if="logoPreview" class="flex items-center gap-4">
+                  <div class="relative">
+                    <img :src="logoPreview" alt="Logo Preview" class="h-24 w-24 object-contain border border-green-300 rounded-lg p-2 bg-white" />
+                    <button
+                      type="button"
+                      @click="clearLogoPreview"
+                      class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="text-sm text-green-600">
+                    <p class="font-medium">New Logo (Preview)</p>
+                    <p class="text-xs">This will replace the current logo</p>
+                  </div>
+                </div>
+
+                <!-- Upload Input -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Logo (PNG, JPG, max 2MB)
+                  </label>
+                  <input
+                    ref="logoInput"
+                    type="file"
+                    accept="image/*"
+                    @change="handleLogoUpload"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                  />
+                  <p class="mt-1 text-xs text-gray-500">
+                    Recommended: Square image (500x500px) for best results
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- PromptPay -->
             <div class="mb-6">
               <h3 class="text-lg font-semibold mb-4">PromptPay</h3>
@@ -48,7 +111,11 @@
                 <option value="a4">A4 (210mm x 297mm)</option>
                 <option value="thermal_80mm">Thermal 80mm</option>
                 <option value="thermal_58mm">Thermal 58mm</option>
+                <option value="dot_matrix">Dot Matrix / กระดาษต่อเนื่อง (9.5" x 11")</option>
               </select>
+              <p v-if="form.printer_type === 'dot_matrix'" class="mt-2 text-sm text-blue-600">
+                📄 กระดาษต่อเนื่องสำหรับเครื่องพิมพ์ Dot Matrix (EPSON LQ-310, LX-310 ฯลฯ)
+              </p>
             </div>
 
             <!-- Notes -->
@@ -71,7 +138,21 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
+import { ref, computed } from 'vue';
+
 const props = defineProps({ settings: Object });
+
+const logoInput = ref(null);
+const logoPreview = ref(null);
+const removedLogo = ref(false);
+
+const currentLogoUrl = computed(() => {
+  if (removedLogo.value) return null;
+  if (props.settings.logo_path) {
+    return `/storage/${props.settings.logo_path}`;
+  }
+  return null;
+});
 
 const form = useForm({
   shop_name: props.settings.shop_name,
@@ -79,6 +160,8 @@ const form = useForm({
   shop_phone: props.settings.shop_phone,
   shop_email: props.settings.shop_email,
   tax_id: props.settings.tax_id,
+  logo: null,
+  remove_logo: false,
   promptpay_number: props.settings.promptpay_number,
   promptpay_name: props.settings.promptpay_name,
   show_logo: props.settings.show_logo,
@@ -91,5 +174,45 @@ const form = useForm({
   printer_type: props.settings.printer_type,
 });
 
-const submit = () => form.post(route('receipt-settings.update'));
+const handleLogoUpload = (event) => {
+  const file = event.target.files?.[0];
+  if (file) {
+    form.logo = file;
+    form.remove_logo = false;
+    removedLogo.value = false;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      logoPreview.value = e.target?.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const clearLogoPreview = () => {
+  form.logo = null;
+  logoPreview.value = null;
+  if (logoInput.value) {
+    logoInput.value.value = '';
+  }
+};
+
+const removeLogo = () => {
+  removedLogo.value = true;
+  form.remove_logo = true;
+  form.logo = null;
+  logoPreview.value = null;
+  if (logoInput.value) {
+    logoInput.value.value = '';
+  }
+};
+
+const submit = () => {
+  form.transform((data) => ({
+    ...data,
+    _method: 'post',
+  })).post(route('receipt-settings.update'), {
+    forceFormData: true,
+  });
+};
 </script>

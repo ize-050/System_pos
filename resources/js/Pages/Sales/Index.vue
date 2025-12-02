@@ -193,8 +193,10 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ sale.customer_name || 'ลูกค้าทั่วไป' }}</div>
-                                        <div class="text-sm text-gray-500">{{ sale.customer_phone || '-' }}</div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ sale.customer ? (sale.customer.name || sale.customer.company_name) : 'ลูกค้าทั่วไป' }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">{{ sale.customer?.phone || '-' }}</div>
                                     </div>
                                 </div>
                             </td>

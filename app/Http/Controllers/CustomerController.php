@@ -80,6 +80,10 @@ class CustomerController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // Set default values for nullable numeric fields
+        $validated['credit_limit'] = $validated['credit_limit'] ?? 0;
+        $validated['payment_terms'] = $validated['payment_terms'] ?? 0;
+
         // Generate customer code
         $lastCustomer = Customer::latest('id')->first();
         $nextNumber = $lastCustomer ? (intval(substr($lastCustomer->customer_code, 4)) + 1) : 1;
@@ -108,16 +112,30 @@ class CustomerController extends Controller
 
         // Calculate customer statistics
         $lastPurchase = $customer->sales()->latest()->first();
-        $stats = [
-            'total_purchases' => $customer->sales()->sum('total_amount'),
-            'total_orders' => $customer->sales()->count(),
-            'average_order' => $customer->sales()->avg('total_amount') ?? 0,
-            'last_purchase' => $lastPurchase ? $lastPurchase->created_at : null,
+        
+        // Get paginated sales
+        $sales = $customer->sales()
+            ->with(['saleItems.product', 'cashier'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+        
+        $totalSales = $customer->sales()->count();
+        $totalAmount = $customer->sales()->sum('total_amount');
+        
+        $statistics = [
+            'total_sales' => $totalSales,
+            'total_amount' => $totalAmount,
+            'total_purchases' => $totalAmount,
+            'total_orders' => $totalSales,
+            'average_order' => $totalSales > 0 ? $totalAmount / $totalSales : 0,
+            'average_per_sale' => $totalSales > 0 ? $totalAmount / $totalSales : 0,
+            'last_purchase' => $lastPurchase ? $lastPurchase->created_at->format('d/m/Y H:i') : null,
         ];
 
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
-            'stats' => $stats,
+            'sales' => $sales,
+            'statistics' => $statistics,
         ]);
     }
 
@@ -150,6 +168,10 @@ class CustomerController extends Controller
             'is_active' => 'boolean',
             'notes' => 'nullable|string',
         ]);
+
+        // Set default values for nullable numeric fields
+        $validated['credit_limit'] = $validated['credit_limit'] ?? 0;
+        $validated['payment_terms'] = $validated['payment_terms'] ?? 0;
 
         $customer->update($validated);
 

@@ -106,17 +106,19 @@ class Product extends Model
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('sku', 'like', "%{$search}%")
-              ->orWhere('barcode', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%");
+            $q
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('sku', 'like', "%{$search}%")
+                ->orWhere('barcode', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
         });
     }
 
     // Accessors
     public function getProfitMarginAttribute()
     {
-        if ($this->cost_price == 0) return 0;
+        if ($this->cost_price == 0)
+            return 0;
         return (($this->selling_price - $this->cost_price) / $this->cost_price) * 100;
     }
 

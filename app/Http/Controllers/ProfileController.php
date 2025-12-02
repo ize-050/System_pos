@@ -25,12 +25,15 @@ class ProfileController extends Controller
      */
     public function update(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'username' => 'required|string|max:255|unique:users,username,' . $request->user()->id,
             'email' => 'required|string|email|max:255|unique:users,email,' . $request->user()->id,
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:20',
         ]);
 
-        $request->user()->fill($request->validated());
+        $request->user()->fill($validated);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -38,7 +41,7 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
+        return redirect()->route('profile.edit')->with('success', 'อัพเดตข้อมูลสำเร็จ');
     }
 
     /**
@@ -55,27 +58,7 @@ class ProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('success', 'Password updated successfully.');
+        return back()->with('success', 'เปลี่ยนรหัสผ่านสำเร็จ');
     }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request)
-    {
-        $request->validate([
-            'password' => ['required', 'current_password'],
-        ]);
-
-        $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/');
-    }
 }

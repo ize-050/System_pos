@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\ProductCategory;
+use App\Exports\ProductTemplateExport;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Imports\ProductImport;
+use App\Models\Product;
+use App\Models\ProductCategory;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\ProductTemplateExport;
-use App\Imports\ProductImport;
 
 class ProductController extends Controller
 {
@@ -79,7 +79,7 @@ class ProductController extends Controller
     public function create()
     {
         $categories = ProductCategory::active()->get();
-        
+
         return Inertia::render('Products/Create', [
             'categories' => $categories
         ]);
@@ -102,10 +102,12 @@ class ProductController extends Controller
 
             Product::create($validated);
 
-            return redirect()->route('products.index')
+            return redirect()
+                ->route('products.index')
                 ->with('success', 'เพิ่มสินค้าเรียบร้อยแล้ว');
         } catch (\Exception $e) {
-            return redirect()->back()
+            return redirect()
+                ->back()
                 ->withInput()
                 ->with('error', 'เกิดข้อผิดพลาดในการเพิ่มสินค้า: ' . $e->getMessage());
         }
@@ -120,7 +122,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $product->load('category');
-        
+
         return Inertia::render('Products/Show', [
             'product' => $product
         ]);
@@ -135,7 +137,9 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $categories = ProductCategory::active()->get();
-        
+
+        $product->append('image_url');
+
         return Inertia::render('Products/Edit', [
             'product' => $product,
             'categories' => $categories
@@ -154,6 +158,23 @@ class ProductController extends Controller
         try {
             $validated = $request->validated();
 
+            $numericFields = [
+                'cost_price',
+                'selling_price',
+                'current_stock',
+                'reorder_point',
+            ];
+
+            foreach ($numericFields as $field) {
+                if (!array_key_exists($field, $validated) || $validated[$field] === null || $validated[$field] === '') {
+                    $validated[$field] = $product->{$field};
+                }
+            }
+
+            if (empty($validated['cost_price']) && !empty($validated['selling_price'])) {
+                $validated['cost_price'] = $validated['selling_price'];
+            }
+
             if ($request->hasFile('image')) {
                 // Delete old image if exists
                 if ($product->image_path) {
@@ -164,10 +185,12 @@ class ProductController extends Controller
 
             $product->update($validated);
 
-            return redirect()->route('products.index')
+            return redirect()
+                ->route('products.index')
                 ->with('success', 'แก้ไขสินค้าเรียบร้อยแล้ว');
         } catch (\Exception $e) {
-            return redirect()->back()
+            return redirect()
+                ->back()
                 ->withInput()
                 ->with('error', 'เกิดข้อผิดพลาดในการแก้ไขสินค้า: ' . $e->getMessage());
         }
@@ -186,23 +209,26 @@ class ProductController extends Controller
             if ($product->saleItems()->exists()) {
                 // Instead of deleting, deactivate the product
                 $product->update(['is_active' => false]);
-                
-                return redirect()->route('products.index')
+
+                return redirect()
+                    ->route('products.index')
                     ->with('success', 'ไม่สามารถลบสินค้าที่มีประวัติการขายได้ ระบบได้ปิดการใช้งานสินค้านี้แล้ว');
             }
-            
+
             // If no sales history, allow deletion
             // Delete image if exists
             if ($product->image_path) {
                 Storage::disk('public')->delete($product->image_path);
             }
-            
+
             $product->delete();
 
-            return redirect()->route('products.index')
+            return redirect()
+                ->route('products.index')
                 ->with('success', 'ลบสินค้าเรียบร้อยแล้ว');
         } catch (\Exception $e) {
-            return redirect()->back()
+            return redirect()
+                ->back()
                 ->with('error', 'เกิดข้อผิดพลาดในการลบสินค้า: ' . $e->getMessage());
         }
     }
@@ -230,7 +256,8 @@ class ProductController extends Controller
         $product = Product::withTrashed()->findOrFail($id);
         $product->restore();
 
-        return redirect()->route('products.index')
+        return redirect()
+            ->route('products.index')
             ->with('success', 'Product restored successfully.');
     }
 
@@ -243,29 +270,44 @@ class ProductController extends Controller
     }
 
     /**
-      * Import products from Excel file
-      */
-     public function import(Request $request)
-     {
-         $request->validate([
-             'file' => 'required|mimes:xlsx,xls,csv|max:2048'
-         ]);
+     * Import products from Excel file
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:2048'
+        ]);
 
-         try {
-             $import = new ProductImport();
-             Excel::import($import, $request->file('file'));
+        try {
+            $import = new ProductImport();
+            Excel::import($import, $request->file('file'));
 
-             $successCount = $import->getSuccessCount();
-             $errorCount = $import->getErrorCount();
-             
-             if ($errorCount > 0) {
-                 $message = "นำเข้าข้อมูลเสร็จสิ้น: สำเร็จ {$successCount} รายการ, ข้อผิดพลาด {$errorCount} รายการ";
-                 return redirect()->back()->with('warning', $message);
-             } else {
-                 return redirect()->back()->with('success', "นำเข้าข้อมูลสำเร็จ {$successCount} รายการ");
-             }
-         } catch (\Exception $e) {
-             return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ' . $e->getMessage());
-         }
-     }
+            $successCount = $import->getSuccessCount();
+            $errorCount = $import->getErrorCount();
+
+            if ($errorCount > 0) {
+                $message = "นำเข้าข้อมูลเสร็จสิ้น: สำเร็จ {$successCount} รายการ, ข้อผิดพลาด {$errorCount} รายการ";
+                return redirect()->back()->with('warning', $message);
+            } else {
+                return redirect()->back()->with('success', "นำเข้าข้อมูลสำเร็จ {$successCount} รายการ");
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show barcode label printing page
+     */
+    public function barcodeLabels()
+    {
+        $products = Product::active()
+            ->select('id', 'name', 'sku', 'barcode', 'selling_price')
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('Products/BarcodeLabel', [
+            'products' => $products
+        ]);
+    }
 }

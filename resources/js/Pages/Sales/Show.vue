@@ -88,20 +88,32 @@
                             <div class="p-6">
                                 <h3 class="text-lg font-medium text-gray-900 mb-4">ข้อมูลลูกค้า</h3>
 
-                                <div v-if="sale.customer_name || sale.customer_phone || sale.customer_email" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div v-if="sale.customer_name">
+                                <div v-if="sale.customer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700">ชื่อ</label>
-                                        <p class="mt-1 text-sm text-gray-900">{{ sale.customer_name }}</p>
+                                        <p class="mt-1 text-sm text-gray-900">{{ sale.customer.name || sale.customer.company_name }}</p>
                                     </div>
 
-                                    <div v-if="sale.customer_phone">
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์</label>
-                                        <p class="mt-1 text-sm text-gray-900">{{ sale.customer_phone }}</p>
+                                        <p class="mt-1 text-sm text-gray-900">{{ sale.customer.phone || '-' }}</p>
                                     </div>
 
-                                    <div v-if="sale.customer_email">
+                                    <div>
                                         <label class="block text-sm font-medium text-gray-700">อีเมล</label>
-                                        <p class="mt-1 text-sm text-gray-900">{{ sale.customer_email }}</p>
+                                        <p class="mt-1 text-sm text-gray-900">{{ sale.customer.email || '-' }}</p>
+                                    </div>
+
+                                    <div v-if="sale.customer.customer_type">
+                                        <label class="block text-sm font-medium text-gray-700">ประเภท</label>
+                                        <p class="mt-1 text-sm text-gray-900">
+                                            {{ sale.customer.customer_type === 'individual' ? 'บุคคลธรรมดา' : 'นิติบุคคล' }}
+                                        </p>
+                                    </div>
+
+                                    <div v-if="sale.customer.credit_limit">
+                                        <label class="block text-sm font-medium text-gray-700">วงเงินเครดิต</label>
+                                        <p class="mt-1 text-sm text-gray-900">฿{{ formatPrice(sale.customer.credit_limit) }}</p>
                                     </div>
                                 </div>
 

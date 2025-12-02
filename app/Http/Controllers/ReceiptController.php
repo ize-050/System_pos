@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class ReceiptController extends Controller
 {
@@ -25,9 +26,14 @@ class ReceiptController extends Controller
         // Generate QR Code for PromptPay
         $qrCode = null;
         if ($settings->show_qr_code && $settings->promptpay_number) {
-            $qrCode = base64_encode(QrCode::format('png')
-                ->size(200)
-                ->generate($settings->promptpay_number));
+            try {
+                $qrCode = base64_encode(QrCode::format('png')
+                    ->size(200)
+                    ->generate($settings->promptpay_number));
+            } catch (\Exception $e) {
+                Log::warning('QR Code generation failed: ' . $e->getMessage());
+                $qrCode = null;
+            }
         }
 
         // Generate Barcode for sale number
@@ -57,12 +63,18 @@ class ReceiptController extends Controller
         // Generate QR Code
         $qrCode = null;
         if ($settings->show_qr_code && $settings->promptpay_number) {
-            $qrCode = base64_encode(QrCode::format('png')
-                ->size(200)
-                ->generate($settings->promptpay_number));
+            try {
+                $qrCode = base64_encode(QrCode::format('png')
+                    ->size(200)
+                    ->generate($settings->promptpay_number));
+            } catch (\Exception $e) {
+                // If QR code generation fails, just skip it
+                Log::warning('QR Code generation failed: ' . $e->getMessage());
+                $qrCode = null;
+            }
         }
 
-        return view('receipts.print', [
+        return Inertia::render('Sales/Receipt', [
             'sale' => $sale,
             'settings' => $settings,
             'qrCode' => $qrCode,
@@ -82,9 +94,14 @@ class ReceiptController extends Controller
         // Generate QR Code
         $qrCode = null;
         if ($settings->show_qr_code && $settings->promptpay_number) {
-            $qrCode = base64_encode(QrCode::format('png')
-                ->size(200)
-                ->generate($settings->promptpay_number));
+            try {
+                $qrCode = base64_encode(QrCode::format('png')
+                    ->size(200)
+                    ->generate($settings->promptpay_number));
+            } catch (\Exception $e) {
+                Log::warning('QR Code generation failed: ' . $e->getMessage());
+                $qrCode = null;
+            }
         }
 
         $pdf = Pdf::loadView('receipts.pdf', [
@@ -113,9 +130,14 @@ class ReceiptController extends Controller
         // Generate QR Code
         $qrCode = null;
         if ($settings->show_qr_code && $settings->promptpay_number) {
-            $qrCode = base64_encode(QrCode::format('png')
-                ->size(200)
-                ->generate($settings->promptpay_number));
+            try {
+                $qrCode = base64_encode(QrCode::format('png')
+                    ->size(200)
+                    ->generate($settings->promptpay_number));
+            } catch (\Exception $e) {
+                Log::warning('QR Code generation failed: ' . $e->getMessage());
+                $qrCode = null;
+            }
         }
 
         // Generate PDF

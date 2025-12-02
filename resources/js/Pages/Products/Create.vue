@@ -41,6 +41,36 @@
                   <p v-if="errors.sku" class="mt-1 text-sm text-red-600">{{ errors.sku }}</p>
                 </div>
 
+                <!-- Barcode -->
+                <div>
+                  <label for="barcode" class="block text-sm font-medium text-gray-700">Barcode</label>
+                  <div class="mt-1 flex rounded-md shadow-sm">
+                    <input
+                      id="barcode"
+                      v-model="form.barcode"
+                      type="text"
+                      class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none"
+                      style="border-color: #E2E8F0;"
+                      onfocus="this.style.borderColor='#6B7B47'; this.style.boxShadow='0 0 0 3px rgba(107, 123, 71, 0.2)'"
+                      onblur="this.style.borderColor='#E2E8F0'; this.style.boxShadow='none'"
+                      :class="{ 'border-red-500': errors.barcode }"
+                      placeholder="สแกนหรือกรอก Barcode"
+                    />
+                    <button
+                      type="button"
+                      @click="generateBarcode"
+                      class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:outline-none"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                      สร้างอัตโนมัติ
+                    </button>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-500">กดปุ่ม "สร้างอัตโนมัติ" เพื่อสร้าง Barcode ใหม่</p>
+                  <p v-if="errors.barcode" class="mt-1 text-sm text-red-600">{{ errors.barcode }}</p>
+                </div>
+
                 <!-- Brand -->
                 <div>
                   <label for="brand" class="block text-sm font-medium text-gray-700">ยี่ห้อ</label>
@@ -401,6 +431,7 @@ export default {
 
     const form = useForm({
       sku: '',
+      barcode: '',
       name: '',
       description: '',
       category_id: '',
@@ -419,6 +450,13 @@ export default {
       warranty_period: '',
       specifications: '',
     })
+
+    // Generate Barcode automatically
+    const generateBarcode = () => {
+      const timestamp = Date.now().toString().slice(-10)
+      const random = Math.floor(Math.random() * 100).toString().padStart(2, '0')
+      form.barcode = timestamp + random
+    }
 
     const handleImageUpload = (event) => {
       const file = event.target.files[0]
@@ -471,6 +509,7 @@ export default {
       handleImageUpload,
       removeImage,
       submit,
+      generateBarcode,
     }
   },
 }

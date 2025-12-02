@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Promotion;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\Promotion;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class POSController extends Controller
 {
@@ -29,19 +30,20 @@ class POSController extends Controller
     {
         $categories = ProductCategory::where('is_active', true)
             ->withCount(['products' => function ($query) {
-                $query->where('is_active', true)
-                      ->where('current_stock', '>', 0);
+                $query
+                    ->where('is_active', true)
+                    ->where('current_stock', '>', 0);
             }])
             ->orderBy('name')
             ->get();
-            
+
         $recentSales = Sale::with(['cashier', 'saleItems.product'])
             ->where('cashier_id', auth()->id())
             ->whereDate('created_at', today())
             ->latest()
             ->limit(5)
             ->get();
-            
+
         $todayStats = $this->getTodayStats();
 
         return Inertia::render('POS', [
@@ -57,45 +59,56 @@ class POSController extends Controller
      */
     public function searchProducts(Request $request)
     {
-        $query = Product::with('category')
-            ->where('is_active', true)
-            ->where('current_stock', '>', 0);
+        try {
+            $query = Product::with('category')
+                ->where('is_active', true);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%");
-            });
+            // Search by text (name, SKU, or barcode)
+            $searchTerm = trim($request->input('query', $request->input('search', '')));
+            if (!empty($searchTerm)) {
+                $query->where(function ($q) use ($searchTerm) {
+                    $q
+                        ->where('name', 'like', "%{$searchTerm}%")
+                        ->orWhere('sku', 'like', "%{$searchTerm}%")
+                        ->orWhere('barcode', 'like', "%{$searchTerm}%");
+                });
+            }
+
+            // Filter by category
+            $categoryId = $request->input('category', $request->input('category_id', ''));
+            if (!empty($categoryId) && $categoryId !== '' && $categoryId !== 'null' && $categoryId !== '0') {
+                $query->where('category_id', $categoryId);
+            }
+
+            // Get products with ordering
+            $products = $query
+                ->orderBy('name', 'asc')
+                ->limit(100)
+                ->get()
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'sku' => $product->sku,
+                        'barcode' => $product->barcode,
+                        'selling_price' => (float) $product->selling_price,
+                        'current_stock' => (int) $product->current_stock,
+                        'category' => $product->category ? $product->category->name : 'ไม่มีหมวดหมู่',
+                        'category_id' => $product->category_id,
+                        'image' => $product->image_url
+                    ];
+                });
+
+            return response()->json($products);
+        } catch (\Exception $e) {
+            \Log::error('Error searching products:', [
+                'message' => $e->getMessage(),
+                'query' => $request->input('query'),
+                'category' => $request->input('category')
+            ]);
+
+            return response()->json([], 500);
         }
-
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->filled('barcode')) {
-            $query->where('barcode', $request->barcode);
-        }
-
-        $products = $query->orderBy('name')
-                         ->limit(50)
-                         ->get()
-                         ->map(function ($product) {
-                             return [
-                                 'id' => $product->id,
-                                 'name' => $product->name,
-                                 'sku' => $product->sku,
-                                 'barcode' => $product->barcode,
-                                 'selling_price' => $product->selling_price,
-                                 'current_stock' => $product->current_stock,
-                                 'category' => $product->category ? $product->category->name : null,
-                                 'category_id' => $product->category_id,
-                                 'image' => $product->image_url
-                             ];
-                         });
-
-        return response()->json($products);
     }
 
     /**
@@ -136,31 +149,33 @@ class POSController extends Controller
         if ($request->filled('query')) {
             $search = $request->get('query');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('line_id', 'like', "%{$search}%")
-                  ->orWhere('company_name', 'like', "%{$search}%")
-                  ->orWhere('customer_code', 'like', "%{$search}%");
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('line_id', 'like', "%{$search}%")
+                    ->orWhere('company_name', 'like', "%{$search}%")
+                    ->orWhere('customer_code', 'like', "%{$search}%");
             });
         }
 
-        $customers = $query->orderBy('name')
-                          ->limit(20)
-                          ->get()
-                          ->map(function ($customer) {
-                              return [
-                                  'id' => $customer->id,
-                                  'name' => $customer->name,
-                                  'phone' => $customer->phone,
-                                  'line_id' => $customer->line_id,
-                                  'company_name' => $customer->company_name,
-                                  'customer_code' => $customer->customer_code,
-                                  'customer_type' => $customer->customer_type,
-                                  'credit_limit' => $customer->credit_limit,
-                                  'outstanding_balance' => $customer->outstanding_balance,
-                                  'available_credit' => max(0, $customer->credit_limit - $customer->outstanding_balance)
-                              ];
-                          });
+        $customers = $query
+            ->orderBy('name')
+            ->limit(20)
+            ->get()
+            ->map(function ($customer) {
+                return [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'phone' => $customer->phone,
+                    'line_id' => $customer->line_id,
+                    'company_name' => $customer->company_name,
+                    'customer_code' => $customer->customer_code,
+                    'customer_type' => $customer->customer_type,
+                    'credit_limit' => $customer->credit_limit,
+                    'outstanding_balance' => $customer->outstanding_balance,
+                    'available_credit' => max(0, $customer->credit_limit - $customer->outstanding_balance)
+                ];
+            });
 
         return response()->json(['customers' => $customers]);
     }
@@ -172,7 +187,7 @@ class POSController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,credit,customer_account',
+            'payment_method' => 'required|in:cash,transfer,credit_card,customer_account',
             'customer_id' => 'nullable|exists:customers,id',
             'received_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
@@ -181,6 +196,9 @@ class POSController extends Controller
             'promotion_id' => 'nullable|exists:promotions,id',
         ]);
 
+        // Debug: Log customer_id
+        \Log::info('Processing sale with customer_id: ' . $request->customer_id);
+
         try {
             DB::beginTransaction();
 
@@ -188,7 +206,7 @@ class POSController extends Controller
             $subtotal = collect($request->items)->sum(function ($item) {
                 return $item['quantity'] * $item['unit_price'];
             });
-            
+
             $discountAmount = $request->discount_amount ?? 0;
             $taxAmount = $request->tax_amount ?? 0;
             $totalAmount = $request->total_amount;
@@ -213,7 +231,7 @@ class POSController extends Controller
             // Create sale items and update stock
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                
+
                 // Check stock availability
                 if ($product->current_stock < $item['quantity']) {
                     throw new \Exception("Insufficient stock for product: {$product->name}");
@@ -241,13 +259,13 @@ class POSController extends Controller
             // Update customer outstanding balance if credit sale
             if ($request->payment_method === 'customer_account' && $request->customer_id) {
                 $customer = Customer::findOrFail($request->customer_id);
-                
+
                 // Check if customer has sufficient credit limit
                 $availableCredit = $customer->credit_limit - $customer->outstanding_balance;
                 if ($availableCredit < $totalAmount) {
-                    throw new \Exception("Insufficient credit limit. Available: ฿" . number_format($availableCredit, 2) . ", Required: ฿" . number_format($totalAmount, 2));
+                    throw new \Exception('Insufficient credit limit. Available: ฿' . number_format($availableCredit, 2) . ', Required: ฿' . number_format($totalAmount, 2));
                 }
-                
+
                 $customer->increment('outstanding_balance', $totalAmount);
             }
 
@@ -259,7 +277,6 @@ class POSController extends Controller
                 'sale' => $sale->load(['saleItems.product', 'customer', 'promotion']),
                 'message' => 'Sale processed successfully'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -314,11 +331,11 @@ class POSController extends Controller
     {
         $date = now()->format('Ymd');
         $lastSale = Sale::whereDate('created_at', today())
-                       ->orderBy('id', 'desc')
-                       ->first();
-        
-        $sequence = $lastSale ? (int)substr($lastSale->sale_number, -4) + 1 : 1;
-        
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = $lastSale ? (int) substr($lastSale->sale_number, -4) + 1 : 1;
+
         return 'POS-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
@@ -332,35 +349,37 @@ class POSController extends Controller
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
                 ->where(function ($query) {
-                    $query->whereNull('usage_limit')
-                          ->orWhereColumn('usage_count', '<', 'usage_limit');
+                    $query
+                        ->whereNull('usage_limit')
+                        ->orWhereColumn('usage_count', '<', 'usage_limit');
                 });
 
             // If product IDs are provided, filter promotions
             if ($request->has('product_ids') && !empty($request->product_ids)) {
                 $productIds = $request->product_ids;
-                
+
                 $query->where(function ($q) use ($productIds) {
                     // Include promotions that apply to all products (empty arrays)
                     $q->where(function ($subQ) {
-                        $subQ->whereJsonLength('applicable_products', 0)
-                             ->whereJsonLength('applicable_categories', 0);
+                        $subQ
+                            ->whereJsonLength('applicable_products', 0)
+                            ->whereJsonLength('applicable_categories', 0);
                     });
-                    
+
                     // Or promotions that include specific products
                     foreach ($productIds as $productId) {
-                        $q->orWhereJsonContains('applicable_products', (int)$productId);
+                        $q->orWhereJsonContains('applicable_products', (int) $productId);
                     }
-                    
+
                     // Or promotions that include categories of the products
                     // Get categories of the products in cart
                     $categoryIds = \App\Models\Product::whereIn('id', $productIds)
                         ->pluck('category_id')
                         ->unique()
                         ->toArray();
-                    
+
                     foreach ($categoryIds as $categoryId) {
-                        $q->orWhereJsonContains('applicable_categories', (int)$categoryId);
+                        $q->orWhereJsonContains('applicable_categories', (int) $categoryId);
                     }
                 });
             }
@@ -400,12 +419,12 @@ class POSController extends Controller
         ]);
 
         $promotion = Promotion::findOrFail($request->promotion_id);
-        
+
         // Check if promotion is still valid
-        if (!$promotion->is_active || 
-            $promotion->start_date > now() || 
-            $promotion->end_date < now() ||
-            ($promotion->usage_limit && $promotion->used_count >= $promotion->usage_limit)) {
+        if (!$promotion->is_active ||
+                $promotion->start_date > now() ||
+                $promotion->end_date < now() ||
+                ($promotion->usage_limit && $promotion->used_count >= $promotion->usage_limit)) {
             return response()->json(['error' => 'โปรโมชั่นไม่สามารถใช้งานได้'], 400);
         }
 
@@ -416,24 +435,24 @@ class POSController extends Controller
         // Check which items are eligible for the promotion
         foreach ($cartItems as $item) {
             $product = Product::with('category')->find($item['product_id']);
-            
+
             $isEligible = false;
-            
+
             // Check if product is directly included in applicable_products JSON field
             if ($promotion->canApplyToProduct($product->id)) {
                 $isEligible = true;
             }
-            
+
             // Check if product's category is included in applicable_categories JSON field
             if (!$isEligible && $promotion->canApplyToCategory($product->category_id)) {
                 $isEligible = true;
             }
-            
+
             // If no specific products or categories, apply to all
             if (!$isEligible && empty($promotion->applicable_products) && empty($promotion->applicable_categories)) {
                 $isEligible = true;
             }
-            
+
             if ($isEligible) {
                 $applicableItems[] = array_merge($item, ['product' => $product]);
             }
@@ -444,7 +463,7 @@ class POSController extends Controller
         }
 
         // Calculate subtotal of applicable items
-        $subtotal = array_sum(array_map(function($item) {
+        $subtotal = array_sum(array_map(function ($item) {
             return $item['price'] * $item['quantity'];
         }, $applicableItems));
 
@@ -460,26 +479,26 @@ class POSController extends Controller
             case 'percentage':
                 $discount = $subtotal * ($promotion->value / 100);
                 break;
-                
+
             case 'fixed_amount':
                 $discount = $promotion->value;
                 break;
-                
+
             case 'buy_x_get_y':
                 $buyQuantity = $promotion->min_quantity;
                 $getQuantity = $promotion->free_quantity;
-                
+
                 // Check if any item meets the minimum quantity requirement
                 $hasValidQuantity = false;
                 foreach ($applicableItems as $item) {
                     if ($item['quantity'] >= $buyQuantity) {
                         $hasValidQuantity = true;
                         $freeItems = floor($item['quantity'] / $buyQuantity) * $getQuantity;
-                        $freeItems = min($freeItems, $item['quantity']); // Can't get more free than total quantity
+                        $freeItems = min($freeItems, $item['quantity']);  // Can't get more free than total quantity
                         $discount += $freeItems * $item['price'];
                     }
                 }
-                
+
                 // If no item meets the minimum quantity requirement
                 if (!$hasValidQuantity) {
                     return response()->json([

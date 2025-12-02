@@ -214,8 +214,8 @@
                         <div class="p-4 sm:p-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-base sm:text-lg font-semibold text-gray-900">⚠️ แจ้งเตือนสินค้าใกล้หมด</h3>
-                                <Link :href="route('stocks.index')" class="text-sm font-medium transition-colors" style="color: #6B7B47;" onmouseover="this.style.color='#8A9B5A'" onmouseout="this.style.color='#6B7B47'">
-                                    จัดการสต็อก
+                                <Link :href="route('products.index')" class="text-sm font-medium transition-colors" style="color: #6B7B47;" onmouseover="this.style.color='#8A9B5A'" onmouseout="this.style.color='#6B7B47'">
+                                    จัดการสินค้า
                                 </Link>
                             </div>
                             <div class="overflow-x-auto">
@@ -493,8 +493,12 @@ const createPaymentChart = () => {
 
 onMounted(() => {
     nextTick(() => {
-        createSalesChart()
-        createPaymentChart()
+        try {
+            createSalesChart()
+            createPaymentChart()
+        } catch (error) {
+            console.error('Error creating charts:', error)
+        }
     })
 })
 </script>

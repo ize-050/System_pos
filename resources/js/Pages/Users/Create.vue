@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <Head title="Create User" />
-
+  <AppLayout title="สร้างผู้ใช้ใหม่">
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -176,24 +174,20 @@
                 </label>
               </div>
 
-              <!-- Submit Buttons -->
               <div class="flex justify-end space-x-3">
                 <Link :href="route('users.index')" class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-400 active:bg-gray-500 focus:outline-none focus:border-gray-500 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                  Cancel
+                  ยกเลิก
                 </Link>
                 <button
-                    type="submit"
-                    :disabled="form.processing"
-                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest disabled:opacity-25 transition ease-in-out duration-150"
-                    style="background-color: #6B7B47; border-color: #6B7B47;"
-                    onmouseover="this.style.backgroundColor='#8A9B5A'"
-                    onmouseout="this.style.backgroundColor='#6B7B47'"
-                  >
-                  <svg v-if="processing" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  type="submit"
+                  :disabled="form.processing"
+                  class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150"
+                >
+                  <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  {{ processing ? 'Creating...' : 'Create User' }}
+                  {{ form.processing ? 'กำลังสร้าง...' : 'สร้างผู้ใช้' }}
                 </button>
               </div>
             </form>
@@ -201,43 +195,31 @@
         </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
-<script>
-import { Head, Link } from '@inertiajs/vue3'
+<script setup>
 import { useForm } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
+import AppLayout from '@/Layouts/AppLayout.vue'
 
-export default {
-  components: {
-    Head,
-    Link,
-  },
-  props: {
-    errors: Object,
-  },
-  setup() {
-    const { data: form, post, processing } = useForm({
-      username: '',
-      email: '',
-      first_name: '',
-      last_name: '',
-      phone: '',
-      role: '',
-      password: '',
-      password_confirmation: '',
-      is_active: true,
-    })
+const props = defineProps({
+  errors: Object,
+})
 
-    const submit = () => {
-      post(route('users.store'))
-    }
+const form = useForm({
+  username: '',
+  email: '',
+  first_name: '',
+  last_name: '',
+  phone: '',
+  role: '',
+  password: '',
+  password_confirmation: '',
+  is_active: true,
+})
 
-    return {
-      form,
-      processing,
-      submit,
-    }
-  },
+const submit = () => {
+  form.post(route('users.store'))
 }
 </script>

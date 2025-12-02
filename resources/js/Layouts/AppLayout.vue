@@ -76,19 +76,45 @@ const navigationItems = computed(() => {
             description: 'วิเคราะห์ข้อมูล'
         },
         {
-            name: 'รายงาน (บัญชี)',
-            route: 'reports.sales',
+            name: 'รายงาน',
             icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-            roles: ['admin', 'manager'],
-            description: 'รายงานการเงิน'
+            roles: ['admin', 'manager', 'accountant'],
+            description: 'รายงานต่างๆ',
+            children: [
+                {
+                    name: 'รายงานยอดขาย-ซื้อรายวัน',
+                    route: 'reports.daily-sales-purchase',
+                    description: 'รายงานยอดขาย-ซื้อและสินค้าคงคลัง'
+                },
+                {
+                    name: 'รายงานการขาย',
+                    route: 'reports.sales',
+                    description: 'รายงานการขายทั้งหมด'
+                },
+                {
+                    name: 'รายงานการซื้อ',
+                    route: 'reports.purchases',
+                    description: 'รายงานการซื้อสินค้า'
+                },
+                {
+                    name: 'รายงานสินค้าคงคลัง',
+                    route: 'reports.inventory',
+                    description: 'รายงานสต็อกสินค้า'
+                },
+                {
+                    name: 'รายงานการเบิกสินค้า',
+                    route: 'reports.stock-requisitions',
+                    description: 'รายงานการเบิกสินค้า'
+                }
+            ]
         },
-        {
-            name: 'ลูกหนี้/เจ้าหนี้',
-            route: 'debtors.index',
-            icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1',
-            roles: ['admin', 'manager'],
-            description: 'จัดการลูกหนี้เจ้าหนี้'
-        },
+        // {
+        //     name: 'ลูกหนี้/เจ้าหนี้',
+        //     route: 'debtors.index',
+        //     icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1',
+        //     roles: ['admin', 'manager'],
+        //     description: 'จัดการลูกหนี้เจ้าหนี้'
+        // },
         {
             name: 'โปรโมชั่น',
             route: 'promotions.index',
@@ -104,6 +130,13 @@ const navigationItems = computed(() => {
             description: 'จัดการใบสั่งซื้อสินค้า'
         },
         {
+            name: 'ใบเบิกสินค้า',
+            route: 'stock-requisitions.index',
+            icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+            roles: ['admin', 'manager', 'accountant'],
+            description: 'จัดการใบเบิกสินค้า'
+        },
+        {
             name: 'ตั้งค่าใบเสร็จ',
             route: 'receipt-settings.edit',
             icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
@@ -117,6 +150,12 @@ const navigationItems = computed(() => {
 
 const toggleSidebar = () => {
     showingSidebar.value = !showingSidebar.value;
+};
+
+const openMenus = ref({});
+
+const toggleMenu = (itemName) => {
+    openMenus.value[itemName] = !openMenus.value[itemName];
 };
 </script>
 
@@ -152,33 +191,89 @@ const toggleSidebar = () => {
 
                 <!-- Navigation -->
                 <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-                    <Link
-                        v-for="item in navigationItems"
-                        :key="item.route"
-                        :href="route(item.route)"
-                        :class="{
-                            'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-r-4 border-green-500 shadow-sm': route().current(item.route + '*'),
-                            'text-gray-700 hover:bg-gray-50 hover:text-gray-900': !route().current(item.route + '*')
-                        }"
-                        class="group flex items-center px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm"
-                    >
-                        <svg
-                            class="mr-4 h-5 w-5 flex-shrink-0"
-                            :class="{
-                                'text-green-600': route().current(item.route + '*'),
-                                'text-gray-400 group-hover:text-gray-600': !route().current(item.route + '*')
-                            }"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
-                        </svg>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold truncate">{{ item.name }}</div>
-                            <div class="text-xs text-gray-500 mt-0.5 truncate">{{ item.description }}</div>
+                    <template v-for="item in navigationItems" :key="item.name">
+                        <!-- Menu with children (dropdown) -->
+                        <div v-if="item.children">
+                            <button
+                                @click="toggleMenu(item.name)"
+                                class="group w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                            >
+                                <div class="flex items-center flex-1 min-w-0">
+                                    <svg
+                                        class="mr-4 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-600"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                                    </svg>
+                                    <div class="flex-1 min-w-0 text-left">
+                                        <div class="font-semibold truncate">{{ item.name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5 truncate">{{ item.description }}</div>
+                                    </div>
+                                </div>
+                                <svg
+                                    class="ml-2 h-4 w-4 transition-transform duration-200"
+                                    :class="{ 'rotate-180': openMenus[item.name] }"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            
+                            <!-- Submenu -->
+                            <div
+                                v-show="openMenus[item.name]"
+                                class="mt-1 ml-4 space-y-1"
+                            >
+                                <Link
+                                    v-for="child in item.children"
+                                    :key="child.route"
+                                    :href="route(child.route)"
+                                    :class="{
+                                        'bg-green-50 text-green-700 border-l-4 border-green-500': route().current(child.route + '*'),
+                                        'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent': !route().current(child.route + '*')
+                                    }"
+                                    class="group flex items-center px-4 py-2.5 text-sm rounded-lg transition-all duration-200"
+                                >
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium truncate">{{ child.name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5 truncate">{{ child.description }}</div>
+                                    </div>
+                                </Link>
+                            </div>
                         </div>
-                    </Link>
+                        
+                        <!-- Regular menu item -->
+                        <Link
+                            v-else
+                            :href="route(item.route)"
+                            :class="{
+                                'bg-gradient-to-r from-green-50 to-green-100 text-green-800 border-r-4 border-green-500 shadow-sm': route().current(item.route + '*'),
+                                'text-gray-700 hover:bg-gray-50 hover:text-gray-900': !route().current(item.route + '*')
+                            }"
+                            class="group flex items-center px-4 py-3.5 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-sm"
+                        >
+                            <svg
+                                class="mr-4 h-5 w-5 flex-shrink-0"
+                                :class="{
+                                    'text-green-600': route().current(item.route + '*'),
+                                    'text-gray-400 group-hover:text-gray-600': !route().current(item.route + '*')
+                                }"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold truncate">{{ item.name }}</div>
+                                <div class="text-xs text-gray-500 mt-0.5 truncate">{{ item.description }}</div>
+                            </div>
+                        </Link>
+                    </template>
                 </nav>
             </div>
 

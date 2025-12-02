@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProductRequest extends FormRequest
@@ -24,9 +25,9 @@ class UpdateProductRequest extends FormRequest
     public function rules()
     {
         $productId = $this->route('product')->id ?? $this->route('product');
-        
+
         return [
-            'sku' => 'required|string|max:50|unique:products,sku,' . $productId,
+            'sku' => 'nullable|string|max:50|unique:products,sku,' . $productId,
             'name' => 'required|string|max:200',
             'description' => 'nullable|string',
             'category_id' => 'required|exists:product_categories,id',
@@ -59,6 +60,52 @@ class UpdateProductRequest extends FormRequest
         ];
     }
 
+    protected function prepareForValidation(): void
+    {
+        $product = $this->route('product');
+
+        if (!$product instanceof Product) {
+            return;
+        }
+
+        $fields = [
+            'sku',
+            'name',
+            'description',
+            'category_id',
+            'unit',
+            'brand',
+            'model',
+            'size',
+            'weight',
+            'cost_price',
+            'selling_price',
+            'current_stock',
+            'reorder_point',
+            'warranty_period',
+            'specifications',
+            'notes',
+            'is_active',
+        ];
+
+        $defaults = $product->only($fields);
+        $input = $this->all();
+
+        foreach ($defaults as $field => $value) {
+            if (array_key_exists($field, $input)) {
+                $incoming = $input[$field];
+
+                if ($incoming === '' || $incoming === null) {
+                    $input[$field] = $value;
+                }
+            } else {
+                $input[$field] = $value;
+            }
+        }
+
+        $this->replace($input);
+    }
+
     /**
      * Get custom messages for validator errors.
      *
@@ -67,7 +114,6 @@ class UpdateProductRequest extends FormRequest
     public function messages()
     {
         return [
-            'sku.required' => 'รหัสสินค้าจำเป็นต้องระบุ',
             'sku.unique' => 'รหัสสินค้านี้มีอยู่แล้ว',
             'name.required' => 'ชื่อสินค้าจำเป็นต้องระบุ',
             'category_id.required' => 'หมวดหมู่จำเป็นต้องระบุ',

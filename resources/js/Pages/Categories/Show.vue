@@ -1,50 +1,38 @@
 <template>
-  <div>
+  <AppLayout title="Category Details">
+    <template #header>
+      <div class="flex items-center justify-between">
+        <h1 class="font-semibold text-xl text-gray-800 leading-tight">Category Details</h1>
+        <div class="flex space-x-3">
+          <Link :href="route('categories.edit', category.id)" 
+                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest transition ease-in-out duration-150"
+                style="background-color: #6B7B47; border-color: #6B7B47;"
+                onmouseover="this.style.backgroundColor='#8A9B5A'"
+                onmouseout="this.style.backgroundColor='#6B7B47'">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit
+          </Link>
+          <Link :href="route('categories.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Categories
+          </Link>
+        </div>
+      </div>
+    </template>
+
     <Head title="Category Details" />
 
     <div class="py-12">
       <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
           <div class="p-6 bg-white border-b border-gray-200">
-            <!-- Header -->
-            <div class="mb-6 flex justify-between items-center">
-              <h1 class="text-2xl font-bold text-gray-900">Category Details</h1>
-              <div class="flex space-x-3">
-                <Link :href="route('categories.edit', category.id)" 
-                      class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest transition ease-in-out duration-150"
-                      style="background-color: #6B7B47; border-color: #6B7B47;"
-                      onmouseover="this.style.backgroundColor='#8A9B5A'"
-                      onmouseout="this.style.backgroundColor='#6B7B47'">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
-                  Edit
-                </Link>
-                <Link :href="route('categories.index')" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                  </svg>
-                  Back to Categories
-                </Link>
-              </div>
-            </div>
-
             <!-- Category Overview Card -->
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8">
               <div class="flex items-start space-x-6">
-                <!-- Category Image -->
-                <div class="flex-shrink-0">
-                  <div v-if="category.image_url" class="h-24 w-24 rounded-lg overflow-hidden border-2 border-white shadow-lg">
-                    <img :src="category.image_url" :alt="category.name" class="h-full w-full object-cover">
-                  </div>
-                  <div v-else class="h-24 w-24 rounded-lg bg-gray-200 flex items-center justify-center border-2 border-white shadow-lg">
-                    <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                    </svg>
-                  </div>
-                </div>
-
-                <!-- Category Info -->
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center space-x-3 mb-2">
                     <h2 class="text-2xl font-bold text-gray-900">{{ category.name }}</h2>
@@ -162,14 +150,6 @@
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div v-for="product in category.products.slice(0, 6)" :key="product.id" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div class="flex items-center space-x-3">
-                    <div v-if="product.image_url" class="h-12 w-12 rounded-lg overflow-hidden">
-                      <img :src="product.image_url" :alt="product.name" class="h-full w-full object-cover">
-                    </div>
-                    <div v-else class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
-                      <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                      </svg>
-                    </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-900 truncate">{{ product.name }}</p>
                       <p class="text-sm text-gray-500">{{ formatPrice(product.selling_price) }}</p>
@@ -203,63 +183,64 @@
         </div>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>
 
-<script>
-import { Head, Link } from '@inertiajs/vue3'
-import { router } from '@inertiajs/vue3'
+<script setup>
+import AppLayout from '@/Layouts/AppLayout.vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { route } from 'ziggy-js'
 
-export default {
-  components: {
-    Head,
-    Link,
+const props = defineProps({
+  category: {
+    type: Object,
+    required: true,
   },
-  props: {
-    category: Object,
-  },
-  methods: {
-    getStatusClass(isActive) {
-      return isActive
-        ? 'bg-green-100 text-green-800'
-        : 'bg-red-100 text-red-800'
-    },
-    getStockStatus(quantity) {
-      if (quantity <= 0) return 'Out of Stock'
-      if (quantity <= 10) return 'Low Stock'
-      return 'In Stock'
-    },
-    getStockStatusClass(quantity) {
-      if (quantity <= 0) return 'bg-red-100 text-red-800'
-      if (quantity <= 10) return 'bg-yellow-100 text-yellow-800'
-      return 'bg-green-100 text-green-800'
-    },
-    formatPrice(price) {
-      return new Intl.NumberFormat('th-TH', {
-        style: 'currency',
-        currency: 'THB'
-      }).format(price)
-    },
-    formatDate(dateString) {
-      if (!dateString) return 'N/A'
-      return new Date(dateString).toLocaleDateString('th-TH', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-    deleteCategory() {
-      if (this.category.products_count > 0) {
-        alert('Cannot delete category that has products. Please move or delete all products first.')
-        return
-      }
-      
-      if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-        router.delete(route('categories.destroy', this.category.id))
-      }
-    },
-  },
+})
+
+const category = computed(() => props.category)
+
+const getStatusClass = (isActive) =>
+  isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+
+const getStockStatus = (quantity) => {
+  if (quantity <= 0) return 'Out of Stock'
+  if (quantity <= 10) return 'Low Stock'
+  return 'In Stock'
+}
+
+const getStockStatusClass = (quantity) => {
+  if (quantity <= 0) return 'bg-red-100 text-red-800'
+  if (quantity <= 10) return 'bg-yellow-100 text-yellow-800'
+  return 'bg-green-100 text-green-800'
+}
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+  }).format(price)
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  return new Date(dateString).toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+const deleteCategory = () => {
+  if ((category.value?.products_count ?? 0) > 0) {
+    alert('Cannot delete category that has products. Please move or delete all products first.')
+    return
+  }
+
+  if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+    router.delete(route('categories.destroy', category.value.id))
+  }
 }
 </script>

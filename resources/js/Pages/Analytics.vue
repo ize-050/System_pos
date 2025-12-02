@@ -110,60 +110,29 @@
                     </div>
                 </div>
 
-                <!-- Charts Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6" v-if="analytics">
-                    <!-- Sales Trend Chart -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">แนวโน้มยอดขาย</h3>
-                            <div class="h-64">
-                                <SalesTrendChart 
-                                    :data="analytics.sales_trend || []"
-                                    :analysis-type="filters.analysisType"
-                                    :height="256"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Customer Segmentation Chart -->
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div class="p-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">การแบ่งกลุ่มลูกค้า</h3>
-                            <div class="h-64">
-                                <CustomerSegmentChart 
-                                    :regular-customers="analytics.regular_customers || 0"
-                                    :new-customers="analytics.new_customers || 0"
-                                    :height="256"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Performance Chart -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" v-if="analytics">
+                <!-- Sales Trend Table -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" v-if="analytics && analytics.sales_trend && analytics.sales_trend.length > 0">
                     <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">ประสิทธิภาพสินค้า</h3>
-                        <div class="h-80">
-                            <ProductPerformanceChart 
-                                :top-products="analytics.top_products || []"
-                                :height="320"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profit Analysis Chart -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6" v-if="analytics">
-                    <div class="p-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">การวิเคราะห์กำไรขั้นต้น</h3>
-                        <div class="h-80">
-                            <ProfitAnalysisChart 
-                                :data="analytics.sales_trend || []"
-                                :analysis-type="filters.analysisType"
-                                :height="320"
-                            />
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">📊 แนวโน้มยอดขาย</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ช่วงเวลา</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">ยอดขาย</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">กำไรขั้นต้น</th>
+                                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">จำนวนออเดอร์</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr v-for="item in analytics.sales_trend" :key="item.period">
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.period }}</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900">{{ formatCurrency(item.total_sales) }}</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-right text-green-600">{{ formatCurrency(item.gross_profit) }}</td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900">{{ item.total_orders }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -264,30 +233,36 @@
                 </div>
 
                 <!-- Customer Analysis -->
-                <div class="bg-white shadow-sm rounded-lg p-6 mb-6">
+                <div class="bg-white shadow-sm rounded-lg p-6 mb-6" v-if="analytics">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">👥 การวิเคราะห์พฤติกรรมลูกค้า</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <!-- Customer Segmentation Chart -->
-                        <div class="col-span-1">
-                            <h4 class="text-md font-medium text-gray-700 mb-3">การแบ่งกลุ่มลูกค้า</h4>
-                            <div class="h-64">
-                                <canvas ref="customerSegmentChart"></canvas>
-                            </div>
-                        </div>
-                        
                         <!-- Customer Stats -->
                         <div class="space-y-4">
                             <div class="bg-green-50 p-4 rounded-lg">
                                 <div class="text-sm text-green-600 font-medium">ลูกค้าประจำ</div>
-                                <div class="text-2xl font-bold text-green-900">{{ analytics?.regular_customers || 0 }}</div>
-                                <div class="text-xs text-green-600">ซื้อ 3+ ครั้ง</div>
+                                <div class="text-2xl font-bold text-green-900">{{ analytics.regular_customers || 0 }}</div>
+                                <div class="text-xs text-green-600">ซื้อมากกว่า 1,000 บาท</div>
                             </div>
                             
                             <div class="bg-yellow-50 p-4 rounded-lg">
                                 <div class="text-sm text-yellow-600 font-medium">ลูกค้าใหม่</div>
-                                <div class="text-2xl font-bold text-yellow-900">{{ analytics?.new_customers || 0 }}</div>
-                                <div class="text-xs text-yellow-600">ซื้อครั้งแรก</div>
+                                <div class="text-2xl font-bold text-yellow-900">{{ analytics.new_customers || 0 }}</div>
+                                <div class="text-xs text-yellow-600">ลูกค้าทั่วไป</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-sm text-blue-600 font-medium">ลูกค้าทั้งหมด</div>
+                                <div class="text-2xl font-bold text-blue-900">{{ analytics.total_customers || 0 }}</div>
+                                <div class="text-xs text-blue-600">ในช่วงเวลาที่เลือก</div>
+                            </div>
+                            
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="text-sm text-purple-600 font-medium">ค่าเฉลี่ยต่อออเดอร์</div>
+                                <div class="text-2xl font-bold text-purple-900">{{ formatCurrency(analytics.average_order_value || 0) }}</div>
+                                <div class="text-xs text-purple-600">ต่อ 1 ออเดอร์</div>
                             </div>
                         </div>
                     </div>
@@ -352,10 +327,6 @@
 import { ref, onMounted } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import axios from 'axios'
-import SalesTrendChart from '@/Components/Charts/SalesTrendChart.vue'
-import ProductPerformanceChart from '@/Components/Charts/ProductPerformanceChart.vue'
-import CustomerSegmentChart from '@/Components/Charts/CustomerSegmentChart.vue'
-import ProfitAnalysisChart from '@/Components/Charts/ProfitAnalysisChart.vue'
 
 // Reactive data
 const loading = ref(false)
@@ -381,12 +352,17 @@ const loadAnalytics = async () => {
     loading.value = true
     try {
         const response = await axios.get('/api/analytics/comprehensive', {
-            params: filters.value
+            params: {
+                start_date: filters.value.startDate,
+                end_date: filters.value.endDate,
+                analysis_type: filters.value.analysisType
+            }
         })
         analytics.value = response.data
+        console.log('Analytics data loaded:', analytics.value)
     } catch (error) {
         console.error('Error loading analytics:', error)
-        alert('เกิดข้อผิดพลาดในการโหลดข้อมูล')
+        alert('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + (error.response?.data?.message || error.message))
     } finally {
         loading.value = false
     }

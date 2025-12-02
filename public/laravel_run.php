@@ -9,8 +9,10 @@ ini_set('display_errors', '1');
 error_reporting(E_ALL);
 set_time_limit(120);
 
-$projectBase = realpath(__DIR__ . '/../pos_system'); // ชี้ไปโฟลเดอร์โปรเจกต์
-if (!$projectBase) { exit("Project base not found\n"); }
+$projectBase = realpath(__DIR__ . '/../pos_system');  // ชี้ไปโฟลเดอร์โปรเจกต์
+if (!$projectBase) {
+  exit("Project base not found\n");
+}
 
 // Boot Laravel
 require $projectBase . '/vendor/autoload.php';
@@ -22,13 +24,16 @@ $kernel = $app->make(ConsoleKernel::class);
 
 // รายการคำสั่งที่จะรันต่อกัน
 $commands = [
-  'optimize:clear',
+  // ลบ optimize:clear ออก เพราะมันรวมคำสั่งด้านล่างอยู่แล้ว
+  'cache:clear',
   'config:clear',
   'route:clear',
   'view:clear',
-  'cache:clear',
+  'clear-compiled',
   // 'key:generate --ansi',   // ต้องการก็เปิดบรรทัดนี้
   'config:cache',
+  'route:cache',
+  'view:cache',
 ];
 
 header('Content-Type: text/plain; charset=utf-8');

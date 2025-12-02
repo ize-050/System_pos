@@ -1,5 +1,5 @@
 <template>
-  <div class="thermal-receipt" style="width: 80mm; padding: 5mm; font-family: monospace; font-size: 12px;">
+  <div class="thermal-receipt" :style="receiptStyle" style="border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background: white;">
     <div class="text-center mb-2">
       <div class="font-bold text-lg">{{ settings.shop_name }}</div>
       <div class="text-xs">{{ settings.shop_address }}</div>
@@ -49,10 +49,22 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 import JsBarcode from 'jsbarcode';
 
 const props = defineProps({ sale: Object, settings: Object, qrCode: String, barcode: String });
+
+// Dynamic width based on printer type
+const receiptWidth = computed(() => {
+  return props.settings.printer_type === 'thermal_58mm' ? '58mm' : '80mm';
+});
+
+const receiptStyle = computed(() => ({
+  width: receiptWidth.value,
+  padding: '5mm',
+  fontFamily: 'monospace',
+  fontSize: props.settings.printer_type === 'thermal_58mm' ? '10px' : '12px'
+}));
 
 onMounted(() => {
   if (props.settings.show_barcode && props.barcode) {
@@ -60,13 +72,22 @@ onMounted(() => {
   }
 });
 
-const formatDate = (date) => new Date(date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-const formatCurrency = (amount) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+const formatCurrency = (amount) => {
+  if (!amount || isNaN(amount)) return '฿0.00'
+  return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount)
+}
 </script>
 
 <style>
 @media print {
   @page { size: 80mm auto; margin: 0; }
-  body { margin: 0; width: 80mm; }
+  body { margin: 0; }
+  .thermal-receipt[style*="58mm"] { width: 58mm !important; }
+  .thermal-receipt[style*="80mm"] { width: 80mm !important; }
 }
 </style>

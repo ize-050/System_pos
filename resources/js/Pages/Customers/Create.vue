@@ -269,6 +269,11 @@ const submit = () => {
     return
   }
 
+  if (!form.customer_type) {
+    info('กรอกข้อมูลไม่ครบ', 'กรุณาเลือกประเภทลูกค้า')
+    return
+  }
+
   form.post(route('customers.store'), {
     onSuccess: () => {
       success('บันทึกข้อมูลสำเร็จ', 'เพิ่มลูกค้าใหม่เรียบร้อยแล้ว')

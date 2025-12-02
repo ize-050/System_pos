@@ -151,8 +151,11 @@ class PurchaseOrderController extends Controller
             'receivedBy'
         ])->findOrFail($id);
 
+        $settings = \App\Models\ReceiptSettings::getSettings();
+
         return Inertia::render('PurchaseOrders/Show', [
             'purchaseOrder' => $po,
+            'settings' => $settings,
         ]);
     }
 

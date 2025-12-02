@@ -59,7 +59,7 @@
           <!-- Mobile Product List -->
           <div class="space-y-3 mb-20">
             <div
-              v-for="product in filteredProducts"
+              v-for="product in products"
               :key="product.id"
               class="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-lg transition-shadow"
               @click="addToCart(product)"
@@ -121,7 +121,7 @@
                   <div v-for="item in cartItems" :key="item.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div class="flex-1">
                       <h4 class="font-medium">{{ item.product_name }}</h4>
-                      <p class="text-sm text-gray-500">฿{{ formatPrice(item.price) }} x {{ item.quantity }}</p>
+                      <p class="text-sm text-gray-500">{{ item.quantity }} หน่วย x ฿{{ formatPrice(item.price) }} / หน่วย</p>
                     </div>
                     <div class="flex items-center space-x-2">
                       <button @click="updateCartQuantity({ id: item.id, change: -1 })" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
@@ -150,7 +150,7 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <h4 class="font-medium text-sm text-blue-800">ภาษีมูลค่าเพิ่ม (VAT)</h4>
-                      <p class="text-xs text-blue-600">เลือกใช้หรืุอไม่ใช้ VAT 7%</p>
+                      <p class="text-xs text-blue-600">เลือกใช้หรือไม่ใช้ VAT 7%</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                       <input v-model="includeVAT" type="checkbox" class="sr-only peer" aria-label="เปิด/ปิด VAT">
@@ -182,10 +182,145 @@
           </div>
         </div>
 
-        <!-- Desktop Layout -->
-        <div class="hidden lg:grid lg:grid-cols-12 lg:gap-6">
-          <!-- Product Section (8 columns) -->
-          <div class="lg:col-span-8">
+        <!-- Desktop Layout - NEW POS STYLE -->
+        <div class="hidden lg:grid lg:grid-cols-12 lg:gap-4" style="height: calc(100vh - 140px);">
+          <!-- LEFT: Cart & Summary (5 columns) -->
+          <div class="lg:col-span-5">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-full">
+              <!-- Cart Header -->
+              <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 shadow-md flex-shrink-0">
+                <div class="flex items-center justify-between text-white">
+                  <h2 class="text-xl font-bold">รายการสินค้า</h2>
+                  <span class="bg-white text-indigo-600 px-3 py-1.5 rounded-full text-sm font-bold shadow-sm">
+                    {{ cartItems.length }} รายการ
+                  </span>
+                </div>
+              </div>
+
+              <!-- Cart Items - Fixed Height with Scroll -->
+              <div class="overflow-y-auto bg-white flex-shrink-0" style="height: 280px;">
+                <div v-if="cartItems.length === 0" class="flex flex-col items-center justify-center h-full py-8">
+                  <svg class="w-16 h-16 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                  </svg>
+                  <p class="text-gray-500 text-center text-sm font-medium">ยังไม่มีสินค้าในตะกร้า</p>
+                </div>
+
+                <div v-else class="p-3 space-y-2">
+                  <div v-for="item in cartItems" :key="item.id" class="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-indigo-300 transition-all">
+                    <div class="flex justify-between items-start">
+                      <div class="flex-1 pr-2">
+                        <h4 class="font-bold text-gray-900 text-sm leading-tight mb-1">{{ item.product_name }}</h4>
+                        <p class="text-xs text-gray-600">{{ item.quantity }} หน่วย x ฿{{ formatPrice(item.price) }} / หน่วย</p>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-lg font-bold text-gray-900">฿{{ formatPrice(item.price * item.quantity) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Promotion Section -->
+              <div class="border-t bg-white px-4 py-3 flex-shrink-0">
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">โปรโมชั่น</label>
+                <select v-model="selectedPromotion" @change="handlePromotionChange" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                  <option :value="null">ไม่ใช้โปรโมชั่น</option>
+                  <option v-for="promo in availablePromotions" :key="promo.id" :value="promo.id">
+                    {{ getPromotionLabel(promo) }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- VAT Toggle -->
+              <div class="border-t bg-white px-4 py-2.5 flex-shrink-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-700">VAT 7%</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input v-model="includeVAT" type="checkbox" class="sr-only peer">
+                    <div class="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Summary -->
+              <div class="border-t bg-gray-50 px-4 py-3 flex-shrink-0">
+                <div class="space-y-1.5 mb-2">
+                  <div class="flex justify-between text-sm text-gray-700">
+                    <span>ยอดรวม:</span>
+                    <span class="font-semibold">฿{{ formatPrice(cartTotal) }}</span>
+                  </div>
+                  <div v-if="promotionDiscount > 0" class="flex justify-between text-sm text-green-600">
+                    <span>ส่วนลด:</span>
+                    <span class="font-semibold">-฿{{ formatPrice(promotionDiscount) }}</span>
+                  </div>
+                  <div v-if="includeVAT" class="flex justify-between text-sm text-blue-600">
+                    <span>VAT (7%):</span>
+                    <span class="font-semibold">฿{{ formatPrice(cartTax) }}</span>
+                  </div>
+                </div>
+                <div class="flex justify-between text-2xl font-bold border-t-2 border-gray-300 pt-2">
+                  <span class="text-gray-900">Total:</span>
+                  <span class="text-indigo-600">฿{{ formatPrice(cartGrandTotal) }}</span>
+                </div>
+              </div>
+
+              <!-- Payment Method -->
+              <div class="border-t bg-white px-4 py-3 flex-shrink-0">
+                <label class="block text-xs font-semibold text-gray-700 mb-2">วิธีชำระเงิน</label>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                  <button @click="paymentMethod = 'cash'" 
+                          :class="paymentMethod === 'cash' ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700'"
+                          class="py-2 rounded-lg font-semibold text-sm hover:opacity-90 transition-all">
+                    เงินสด
+                  </button>
+                  <button @click="paymentMethod = 'transfer'" 
+                          :class="paymentMethod === 'transfer' ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-700'"
+                          class="py-2 rounded-lg font-semibold text-sm hover:opacity-90 transition-all">
+                    โอนเงิน
+                  </button>
+                </div>
+
+                <!-- Cash Amount Input -->
+                <div v-if="paymentMethod === 'cash'">
+                  <label class="block text-xs text-gray-600 mb-1">รับเงินมา</label>
+                  <input v-model.number="receivedAmount" type="number" step="0.01"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                         placeholder="0.00">
+                  <div v-if="receivedAmount >= cartGrandTotal" class="mt-1.5 text-sm">
+                    <span class="text-gray-600">เงินทอน:</span>
+                    <span class="font-bold text-green-600 ml-1">฿{{ formatPrice(receivedAmount - cartGrandTotal) }}</span>
+                  </div>
+                </div>
+                
+                <!-- Transfer Note -->
+                <div v-if="paymentMethod === 'transfer'" class="text-xs text-gray-600 mt-2">
+                  ชำระผ่านการโอนเงิน
+                </div>
+              </div>
+
+              <!-- Spacer -->
+              <div class="flex-1"></div>
+
+              <!-- Main Action Buttons -->
+              <div class="border-t bg-gray-50 p-3 flex-shrink-0">
+                <div class="grid grid-cols-2 gap-2">
+                  <button @click="clearCart" :disabled="cartItems.length === 0" 
+                          class="py-3 bg-red-100 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400 text-red-700 font-bold rounded-lg transition-colors">
+                    ล้างตะกร้า
+                  </button>
+                  <button @click="confirmPayment" :disabled="!canProcessPayment"
+                          class="py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-300 disabled:to-gray-300 text-white font-bold rounded-lg shadow-lg transition-all">
+                    ชำระเงิน
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Products (7 columns) -->
+          <div class="lg:col-span-7 overflow-y-auto h-full">
             <!-- Customer Selection Section -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
               <h3 class="text-lg font-semibold mb-4">ข้อมูลลูกค้า</h3>
@@ -254,6 +389,35 @@
               </div>
             </div>
 
+            <!-- Barcode Scanner Section -->
+            <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-md p-4 mb-6">
+              <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                  <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <input
+                    ref="barcodeInput"
+                    v-model="barcodeSearch"
+                    @keyup.enter="searchByBarcode"
+                    type="text"
+                    class="block w-full px-4 py-3 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-white text-lg"
+                    placeholder="🔫 สแกน Barcode หรือพิมพ์รหัส Barcode แล้วกด Enter..."
+                    autofocus
+                  >
+                </div>
+                <button
+                  @click="searchByBarcode"
+                  class="px-4 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                >
+                  ค้นหา
+                </button>
+              </div>
+              <p v-if="barcodeError" class="mt-2 text-white text-sm">{{ barcodeError }}</p>
+            </div>
+
             <!-- Search and Filter Bar -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
               <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -286,27 +450,86 @@
 
             <!-- Product Grid -->
             <div class="bg-white rounded-lg shadow-md p-6">
-              <div class="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <!-- Search Info Bar -->
+              <div v-if="searchQuery || selectedCategory" class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2 text-sm">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span class="text-gray-700">
+                      <span v-if="searchQuery">ค้นหา: <strong>"{{ searchQuery }}"</strong></span>
+                      <span v-if="searchQuery && selectedCategory"> • </span>
+                      <span v-if="selectedCategory">หมวดหมู่: <strong>{{ categories.find(c => c.id == selectedCategory)?.name }}</strong></span>
+                    </span>
+                  </div>
+                  <button @click="clearSearch" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    ล้างการค้นหา
+                  </button>
+                </div>
+              </div>
+
+              <!-- Loading State -->
+              <div v-if="loading" class="flex flex-col items-center justify-center py-16">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div>
+                <p class="text-gray-500">กำลังค้นหาสินค้า...</p>
+              </div>
+
+              <!-- Empty State -->
+              <div v-else-if="products.length === 0" class="flex flex-col items-center justify-center py-16">
+                <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+                <p class="text-gray-500 text-lg font-medium mb-2">ไม่พบสินค้า</p>
+                <p class="text-gray-400 text-sm">ลองค้นหาด้วยคำอื่นหรือเปลี่ยนหมวดหมู่</p>
+              </div>
+
+              <!-- Product Grid -->
+              <div v-else class="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                 <div
                   v-for="product in products"
                   :key="product.id"
-                  class="product-card bg-gray-50 rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-200 card-hover"
+                  class="group relative bg-white rounded-xl p-4 cursor-pointer border-2 border-gray-100 hover:border-primary-400 hover:shadow-lg transition-all duration-200"
                   @click="addToCart(product)"
-                  :class="{ 'opacity-50 cursor-not-allowed': product.current_stock <= 0 }"
+                  :class="{ 'opacity-60 cursor-not-allowed': product.current_stock <= 0 }"
                 >
-                  <div class="aspect-square bg-gray-200 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
-                    <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover">
-                    <svg v-else class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                    </svg>
-                  </div>
-                  <h3 class="font-medium text-gray-900 text-sm mb-1 line-clamp-2">{{ product.name }}</h3>
-                  <p class="text-xs text-gray-500 mb-2">{{ product.category }}</p>
-                  <div class="flex items-center justify-between">
-                    <span class="text-lg font-bold text-primary-600">฿{{ formatPrice(product.selling_price) }}</span>
-                    <span :class="stockStatusClass(product.current_stock)" class="px-2 py-1 rounded-full text-xs font-medium">
-                      {{ product.current_stock }}
+                  <!-- Stock Badge -->
+                  <div class="absolute top-2 right-2 z-10">
+                    <span :class="stockStatusClass(product.current_stock)" class="px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm">
+                      {{ product.current_stock }} ชิ้น
                     </span>
+                  </div>
+
+                  <!-- Product Image -->
+                  <div class="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
+                    <img v-if="product.image" :src="product.image" :alt="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                    <svg v-else class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <!-- Add to Cart Icon Overlay -->
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 flex items-center justify-center transition-all duration-200">
+                      <div class="transform scale-0 group-hover:scale-100 transition-transform duration-200">
+                        <div class="bg-primary-500 text-white rounded-full p-2">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Product Info -->
+                  <div class="space-y-1">
+                    <h3 class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 min-h-[2.5rem]">{{ product.name }}</h3>
+                    <p class="text-xs text-gray-500 flex items-center">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                      </svg>
+                      {{ product.category }}
+                    </p>
+                    <div class="pt-2">
+                      <span class="text-xl font-bold text-primary-600">฿{{ formatPrice(product.selling_price) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -327,104 +550,6 @@
             </div>
           </div>
 
-          <!-- Cart Section (4 columns) -->
-          <div class="lg:col-span-4">
-            <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
-              <h3 class="text-lg font-semibold mb-4">ตะกร้าสินค้า</h3>
-
-              <!-- Cart Items -->
-              <div class="space-y-3 mb-6 max-h-96 overflow-y-auto">
-                <div v-if="cartItems.length === 0" class="text-center py-8 text-gray-500">
-                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v5a2 2 0 01-2 2H9a2 2 0 01-2-2v-5m6-5V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2"></path>
-                  </svg>
-                  <p class="mt-2">ไม่มีสินค้าในตะกร้า</p>
-                </div>
-
-                <div v-for="item in cartItems" :key="item.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div class="flex-1">
-                    <h4 class="font-medium text-sm">{{ item.product_name }}</h4>
-                    <p class="text-sm text-gray-500">฿{{ formatPrice(item.price) }}</p>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <button @click="updateCartQuantity({ id: item.id, change: -1 })" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                      </svg>
-                    </button>
-                    <span class="w-8 text-center text-sm">{{ item.quantity }}</span>
-                    <button @click="updateCartQuantity({ id: item.id, change: 1 })" class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                      </svg>
-                    </button>
-                    <button @click="removeFromCart(item.id)" class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Cart Summary -->
-              <div class="border-t pt-4">
-                <!-- VAT Toggle Section -->
-                <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <h4 class="font-medium text-sm text-blue-800">ภาษีมูลค่าเพิ่ม (VAT)</h4>
-                      <p class="text-xs text-blue-600">เลือกใช้หรืุอไม่ใช้ VAT 7%</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input v-model="includeVAT" type="checkbox" class="sr-only peer" aria-label="เปิด/ปิด VAT">
-                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                </div>
-
-
-
-
-                <div class="space-y-2 mb-4">
-                  <div class="flex justify-between text-sm">
-                    <span>ยอดรวม:</span>
-                    <span>฿{{ formatPrice(cartTotal) }}</span>
-                  </div>
-                  <div v-if="promotionDiscount > 0" class="flex justify-between text-sm text-green-600">
-                    <span>ส่วนลด ({{ appliedPromotion?.name }}):</span>
-                    <span>-฿{{ formatPrice(promotionDiscount) }}</span>
-                  </div>
-                  <div v-if="includeVAT" class="flex justify-between text-sm">
-                    <span>ภาษี (7%):</span>
-                    <span>฿{{ formatPrice(cartTax) }}</span>
-                  </div>
-                  <div class="flex justify-between font-bold text-lg border-t pt-2">
-                    <span>รวมทั้งสิ้น:</span>
-                    <span class="text-primary-600">฿{{ formatPrice(cartGrandTotal) }}</span>
-                  </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="space-y-2">
-                  <button
-                    @click="clearCart"
-                    :disabled="cartItems.length === 0"
-                    class="w-full btn btn-outline"
-                  >
-                    ล้างตะกร้า
-                  </button>
-                  <button
-                    @click="showPaymentModal = true"
-                    :disabled="cartItems.length === 0"
-                    class="w-full btn btn-primary"
-                  >
-                    ชำระเงิน
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Payment Modal -->
@@ -748,16 +873,38 @@ const showPaymentModal = ref(false)
 const loading = ref(false)
 const currentDateTime = ref('')
 
+// Barcode Scanner
+const barcodeInput = ref(null)
+const barcodeSearch = ref('')
+const barcodeError = ref('')
+
 // Products and categories
 const products = ref([])
 const categories = ref([])
 const cartItems = ref([])
 
 // Promotion data
-const availablePromotions = ref([])
+const allPromotions = ref([])
+const selectedPromotion = ref(null)
 const appliedPromotion = ref(null)
 const promotionDiscount = ref(0)
 const showPromotionDropdown = ref(false)
+
+// Computed: Available promotions based on cart items
+const availablePromotions = computed(() => {
+  if (cartItems.value.length === 0) return []
+  
+  return allPromotions.value.filter(promo => {
+    // Check if promotion applies to any product in cart
+    if (promo.applicable_products && promo.applicable_products.length > 0) {
+      return cartItems.value.some(item => 
+        promo.applicable_products.includes(item.product_id)
+      )
+    }
+    // If no specific products, promotion applies to all
+    return true
+  })
+})
 
 // Payment data
 const paymentMethod = ref('cash')
@@ -775,22 +922,8 @@ const selectedMainCustomer = ref(null)
 const includeVAT = ref(true)
 
 // Computed properties
-const filteredProducts = computed(() => {
-  let filtered = products.value
-
-  if (searchQuery.value) {
-    filtered = filtered.filter(product =>
-      product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-
-  if (selectedCategory.value) {
-    filtered = filtered.filter(product => product.category_id == selectedCategory.value)
-  }
-
-  return filtered
-})
+// Note: filteredProducts removed because backend already filters the results
+// We use products.value directly which contains filtered results from API
 
 const categoryFilters = computed(() => {
   const filters = [
@@ -811,16 +944,22 @@ const categoryFilters = computed(() => {
 })
 
 const cartTotal = computed(() => {
-  return cartItems.value.reduce((total, item) => total + (item.price * item.quantity), 0)
+  return cartItems.value.reduce((total, item) => {
+    const itemTotal = Number(item.price) * Number(item.quantity)
+    return total + itemTotal
+  }, 0)
 })
 
 const cartTax = computed(() => {
-  return includeVAT.value ? cartTotal.value * 0.07 : 0
+  if (!includeVAT.value) return 0
+  const subtotal = cartTotal.value - promotionDiscount.value
+  return subtotal * 0.07
 })
 
 const cartGrandTotal = computed(() => {
   const subtotal = cartTotal.value - promotionDiscount.value
-  return subtotal + (includeVAT.value ? subtotal * 0.07 : 0)
+  const tax = includeVAT.value ? subtotal * 0.07 : 0
+  return subtotal + tax
 })
 
 const canProcessPayment = computed(() => {
@@ -859,7 +998,12 @@ const searchProducts = async () => {
 
   loading.value = true
   try {
-    const response = await fetch(`/pos/search-products?query=${encodeURIComponent(searchQuery.value)}&category=${selectedCategory.value}`, {
+    // Build query params
+    const params = new URLSearchParams()
+    if (searchQuery.value) params.append('query', searchQuery.value)
+    if (selectedCategory.value) params.append('category', selectedCategory.value)
+    
+    const response = await fetch(`/pos/search-products?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -875,7 +1019,8 @@ const searchProducts = async () => {
     }
 
     const data = await response.json()
-    products.value = data.products || []
+    // Backend returns products array directly, not wrapped in { products: [] }
+    products.value = Array.isArray(data) ? data : (data.products || [])
   } catch (error) {
     console.error('Error searching products:', error)
     products.value = []
@@ -957,6 +1102,56 @@ const clearMainCustomer = () => {
   mainCustomers.value = []
 }
 
+// Barcode Scanner Functions
+const searchByBarcode = async () => {
+  if (!barcodeSearch.value.trim()) {
+    barcodeError.value = '❌ กรุณาสแกนหรือกรอก Barcode'
+    return
+  }
+
+  barcodeError.value = ''
+  
+  try {
+    const response = await fetch(`/pos/barcode/${encodeURIComponent(barcodeSearch.value.trim())}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      credentials: 'same-origin'
+    })
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        barcodeError.value = `❌ ไม่พบสินค้าที่มี Barcode: ${barcodeSearch.value}`
+      } else {
+        barcodeError.value = '❌ เกิดข้อผิดพลาดในการค้นหา'
+      }
+      return
+    }
+
+    const product = await response.json()
+    
+    if (product && product.id) {
+      addToCart(product)
+      barcodeSearch.value = ''
+      barcodeError.value = ''
+      
+      // Focus back to barcode input for next scan
+      if (barcodeInput.value) {
+        barcodeInput.value.focus()
+      }
+    } else {
+      barcodeError.value = `❌ ไม่พบสินค้าที่มี Barcode: ${barcodeSearch.value}`
+    }
+  } catch (error) {
+    console.error('Error searching by barcode:', error)
+    barcodeError.value = '❌ เกิดข้อผิดพลาดในการค้นหา'
+  }
+}
+
 const loadProducts = async () => {
   loading.value = true
   try {
@@ -976,7 +1171,7 @@ const loadProducts = async () => {
     }
 
     const data = await response.json()
-    products.value = data || []
+    products.value = Array.isArray(data) ? data : (data.products || [])
   } catch (error) {
     console.error('Error loading products:', error)
     products.value = []
@@ -1055,10 +1250,20 @@ const clearCart = () => {
   // Reset promotion when clearing cart
   appliedPromotion.value = null
   promotionDiscount.value = 0
+  // Clear selected customer
+  selectedMainCustomer.value = null
+  mainCustomerSearch.value = ''
+  mainCustomers.value = []
 }
 
 const selectCategory = (filter) => {
   selectedCategory.value = filter.id
+  searchProducts()
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  selectedCategory.value = ''
   searchProducts()
 }
 
@@ -1097,6 +1302,12 @@ const confirmPayment = async () => {
       body: JSON.stringify(saleData)
     })
 
+    if (!response.ok) {
+      const error = await response.json()
+      alert('เกิดข้อผิดพลาด: ' + (error.message || error.error || 'ไม่สามารถบันทึกการขายได้'))
+      return
+    }
+
     const result = await response.json()
 
     if (result.success) {
@@ -1105,17 +1316,20 @@ const confirmPayment = async () => {
       closePaymentModal()
 
       // Show success message with receipt option
-      const printReceipt = confirm(`การขายสำเร็จ! หมายเลขใบเสร็จ: ${result.sale_number}\n\nต้องการพิมพ์ใบเสร็จหรืุอไม่?`)
+      const printReceipt = confirm(`การขายสำเร็จ! หมายเลขใบเสร็จ: ${result.sale_number}\n\nต้องการพิมพ์ใบเสร็จหรือไม่?`)
 
       if (printReceipt) {
-        generateReceipt(result.sale)
+        // Open receipt in new window using the same route as sales
+        window.open(`/receipts/${result.sale.id}/print`, '_blank', 'width=800,height=600')
+        
+        // Wait a moment then redirect to sales history
+        setTimeout(() => {
+          router.visit('/sales')
+        }, 1000)
+      } else {
+        // If not printing, redirect immediately
+        router.visit('/sales')
       }
-
-      // Reload products and promotions to update stock and usage
-      await Promise.all([
-        loadProducts(),
-        loadPromotions()
-      ])
     } else {
       alert('เกิดข้อผิดพลาด: ' + (result.message || 'ไม่สามารถบันทึกการขายได้'))
     }
@@ -1316,7 +1530,7 @@ const loadPromotions = async () => {
 
     if (response.ok) {
       const promotions = await response.json()
-      availablePromotions.value = promotions
+      allPromotions.value = promotions
     } else {
       console.error('Failed to load promotions:', response.status)
     }
@@ -1326,16 +1540,25 @@ const loadPromotions = async () => {
 }
 
 const getPromotionLabel = (promotion) => {
-  switch (promotion.type) {
-    case 'percentage':
-      return `ลด ${promotion.value}%`
-    case 'fixed_amount':
-      return `ลด ฿${formatPrice(promotion.value)}`
-    case 'buy_x_get_y':
-      return `ซื้อ ${promotion.min_quantity} แถม ${promotion.free_quantity}`
-    default:
-      return 'โปรโมชั่นพิเศษ'
+  if (!promotion) return 'โปรโมชั่นพิเศษ'
+  
+  let label = promotion.name || 'โปรโมชั่น'
+  
+  // ใช้ทั้ง type และ discount_type เพื่อรองรับทั้ง 2 แบบ
+  const promoType = promotion.type || promotion.discount_type
+  const promoValue = promotion.value || promotion.discount_value
+  
+  if (promoType === 'percentage' && promoValue) {
+    label += ` (ลด ${promoValue}%)`
+  } else if (promoType === 'fixed_amount' && promoValue) {
+    label += ` (ลด ฿${promoValue})`
+  } else if (promoType === 'buy_x_get_y') {
+    const minQty = promotion.min_quantity || 1
+    const freeQty = promotion.free_quantity || 1
+    label += ` (ซื้อ ${minQty} แถม ${freeQty})`
   }
+  
+  return label
 }
 
 const getPromotionColorClass = (type) => {
@@ -1351,7 +1574,21 @@ const getPromotionColorClass = (type) => {
   }
 }
 
+const handlePromotionChange = () => {
+  if (selectedPromotion.value) {
+    // Find promotion object by ID
+    const promotion = availablePromotions.value.find(p => p.id === selectedPromotion.value)
+    if (promotion) {
+      applyPromotion(promotion)
+    }
+  } else {
+    removePromotion()
+  }
+}
+
 const applyPromotion = async (promotion) => {
+  if (!promotion) return
+  
   try {
     const response = await fetch('/pos/promotions/apply', {
       method: 'POST',
@@ -1373,14 +1610,28 @@ const applyPromotion = async (promotion) => {
     if (response.ok) {
       const result = await response.json()
       appliedPromotion.value = promotion
-      promotionDiscount.value = result.discount
+      promotionDiscount.value = result.discount || 0
     } else {
       const error = await response.json()
-      alert('ไม่สามารถใช้โปรโมชั่นนี้ได้: ' + (error.error || 'เงื่อนไขไม่ตรงตามกำหนด'))
+      
+      let errorMessage = 'ไม่สามารถใช้โปรโมชั่นนี้ได้'
+      if (error.error) {
+        errorMessage += ': ' + error.error
+      } else if (error.message) {
+        errorMessage += ': ' + error.message
+      }
+      
+      alert(errorMessage)
+      selectedPromotion.value = null
+      appliedPromotion.value = null
+      promotionDiscount.value = 0
     }
   } catch (error) {
     console.error('Error applying promotion:', error)
-    alert('เกิดข้อผิดพลาดในการใช้โปรโมชั่น')
+    alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์')
+    selectedPromotion.value = null
+    appliedPromotion.value = null
+    promotionDiscount.value = 0
   }
 }
 

@@ -50,11 +50,19 @@ class ReceiptSettingsController extends Controller
 
         $settings = ReceiptSettings::getSettings();
 
+        // Handle logo removal
+        if ($request->input('remove_logo')) {
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
+            }
+            $validated['logo_path'] = null;
+        }
+
         // Handle logo upload
         if ($request->hasFile('logo')) {
             // Delete old logo if exists
-            if ($settings->logo_path && Storage::exists($settings->logo_path)) {
-                Storage::delete($settings->logo_path);
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
             }
 
             // Store new logo

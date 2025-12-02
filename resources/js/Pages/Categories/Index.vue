@@ -14,28 +14,6 @@
             <div class="mb-6 flex justify-between items-center">
               <h1 class="text-2xl font-bold text-gray-900">จัดการหมวดหมู่สินค้า</h1>
               <div class="flex gap-2">
-                <!-- Download Template Button -->
-                <button 
-                  @click="downloadTemplate"
-                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest transition ease-in-out duration-150 hover:bg-gray-50"
-                >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  ดาวน์โหลด Template
-                </button>
-                
-                <!-- Import Excel Button -->
-                <button 
-                  @click="importExcel"
-                  class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest transition ease-in-out duration-150 hover:bg-gray-50"
-                >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                  </svg>
-                  นำเข้า Excel
-                </button>
-                
                 <!-- Add Category Button -->
                 <Link :href="route('categories.create')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest transition ease-in-out duration-150"
                     style="background-color: #6B7B47; border-color: #6B7B47;"
@@ -47,14 +25,6 @@
                   เพิ่มหมวดหมู่ใหม่
                 </Link>
                 
-                <!-- Hidden file input -->
-                <input 
-                  ref="fileInput" 
-                  type="file" 
-                  accept=".xlsx,.xls" 
-                  @change="handleFileUpload" 
-                  class="hidden"
-                />
               </div>
             </div>
 
@@ -116,21 +86,7 @@
                   <tr v-for="category in (categories?.data || [])" :key="category.id" class="hover:bg-gray-50">
                     <!-- Category Info -->
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div class="flex-shrink-0 h-12 w-12">
-                          <div v-if="category.image_url" class="h-12 w-12 rounded-lg overflow-hidden border border-gray-300">
-                            <img :src="category.image_url" :alt="category.name" class="h-full w-full object-cover">
-                          </div>
-                          <div v-else class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center border border-gray-300">
-                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                            </svg>
-                          </div>
-                        </div>
-                        <div class="ml-4">
-                          <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
-                        </div>
-                      </div>
+                      <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
                     </td>
 
                     <!-- Description -->
@@ -203,7 +159,12 @@
 
             <!-- Pagination -->
             <div v-if="(categories?.data || []).length > 0" class="mt-6">
-              <Pagination :links="categories?.links || []" />
+              <Pagination
+                :links="categories?.links || []"
+                :from="categories?.meta?.from || 0"
+                :to="categories?.meta?.to || 0"
+                :total="categories?.meta?.total || 0"
+              />
             </div>
           </div>
         </div>
@@ -212,152 +173,108 @@
   </AppLayout>
 </template>
 
-<script>
-import { Head, Link } from '@inertiajs/vue3'
+<script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { reactive, watch, onMounted, ref } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
-import { debounce } from 'lodash'
 import Pagination from '@/Components/Pagination.vue'
 import toastStore from '@/Stores/toastStore'
+import { Link, router, usePage } from '@inertiajs/vue3'
+import { onMounted, reactive, watch } from 'vue'
+import { debounce } from 'lodash'
 
-export default {
-  components: {
-    Head,
-    Link,
-    Pagination,
+const props = defineProps({
+  categories: {
+    type: Object,
+    default: () => ({}),
   },
-  props: {
-    categories: Object,
-    filters: Object,
+  filters: {
+    type: Object,
+    default: () => ({}),
   },
-  setup(props) {
-    const page = usePage()
-    const fileInput = ref(null)
+})
 
-    const form = reactive({
-      search: props.filters?.search || '',
-      status: props.filters?.status || '',
-    })
+const page = usePage()
 
-    // Show toast notifications based on flash messages
-    onMounted(() => {
-      if (page.props.flash?.success) {
-        toastStore.success(page.props.flash.success)
-      }
+const form = reactive({
+  search: props.filters?.search || '',
+  status: props.filters?.status || '',
+})
 
-      if (page.props.flash?.error) {
-        toastStore.error(page.props.flash.error)
-      }
-    })
+onMounted(() => {
+  if (page.props.flash?.success) {
+    toastStore.success(page.props.flash.success)
+  }
 
-    // Debounced search
-    const debouncedSearch = debounce(() => {
-      router.get(route('categories.index'), form, {
-        preserveState: true,
-        replace: true,
-      })
-    }, 300)
+  if (page.props.flash?.error) {
+    toastStore.error(page.props.flash.error)
+  }
+})
 
-    watch(() => form.search, debouncedSearch)
-    watch(() => form.status, () => {
-      router.get(route('categories.index'), form, {
-        preserveState: true,
-        replace: true,
-      })
-    })
-
-    const clearFilters = () => {
-      form.search = ''
-      form.status = ''
-      router.get(route('categories.index'))
-    }
-
-    const getStatusClass = (isActive) => {
-      return isActive
-        ? 'bg-green-100 text-green-800'
-        : 'bg-red-100 text-red-800'
-    }
-
-    const formatDate = (date) => {
-      if (!date) return 'ไม่ระบุ'
-      try {
-        return new Date(date).toLocaleDateString('th-TH', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        })
-      } catch (error) {
-        return 'ไม่ระบุ'
-      }
-    }
-
-    const search = () => {
-      debouncedSearch()
-    }
-
-    // Excel import/export functions
-    const downloadTemplate = () => {
-      window.location.href = route('categories.template.download')
-    }
-
-    const importExcel = () => {
-      fileInput.value.click()
-    }
-
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0]
-      if (!file) return
-
-      const formData = new FormData()
-      formData.append('file', file)
-
-      router.post(route('categories.import'), formData, {
-        onSuccess: () => {
-          toastStore.success('นำเข้าข้อมูลหมวดหมู่สำเร็จ')
-          fileInput.value.value = ''
-        },
-        onError: (errors) => {
-          if (errors.file) {
-            toastStore.error(errors.file)
-          } else {
-            toastStore.error('เกิดข้อผิดพลาดในการนำเข้าข้อมูล')
-          }
-          fileInput.value.value = ''
-        }
-      })
-    }
-
-    const deleteCategory = (category) => {
-      if (category.products_count > 0) {
-        toastStore.error(`ไม่สามารถลบ "${category.name}" ได้ เนื่องจากมีสินค้า ${category.products_count} รายการ กรุณาย้ายหรือลบสินค้าก่อน`)
-        return
-      }
-
-      if (confirm(`คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่ "${category.name}"? การกระทำนี้ไม่สามารถยกเลิกได้`)) {
-        router.delete(route('categories.destroy', category.id), {
-          onSuccess: () => {
-            toastStore.crud.deleted('หมวดหมู่')
-          },
-          onError: (errors) => {
-            toastStore.crud.deleteError('หมวดหมู่')
-          }
-        })
-      }
-    }
-
-    return {
-      form,
-      clearFilters,
-      getStatusClass,
-      formatDate,
-      search,
-      fileInput,
-      downloadTemplate,
-      importExcel,
-      handleFileUpload,
-      deleteCategory,
-    }
-  },
+const performSearch = () => {
+  router.get(route('categories.index'), { ...form }, {
+    preserveState: true,
+    replace: true,
+  })
 }
+
+const debouncedSearch = debounce(performSearch, 300)
+
+watch(() => form.search, () => {
+  debouncedSearch()
+})
+
+watch(() => form.status, () => {
+  performSearch()
+})
+
+const clearFilters = () => {
+  form.search = ''
+  form.status = ''
+  router.get(route('categories.index'))
+}
+
+const getStatusClass = (isActive) => (isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')
+
+const formatDate = (date) => {
+  if (!date) return 'ไม่ระบุ'
+  try {
+    return new Date(date).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  } catch (error) {
+    return 'ไม่ระบุ'
+  }
+}
+
+const search = () => {
+  debouncedSearch()
+}
+
+const deleteCategory = (category) => {
+  if (category.products_count > 0) {
+    toastStore.error(`ไม่สามารถลบ "${category.name}" ได้ เนื่องจากมีสินค้า ${category.products_count} รายการ กรุณาย้ายหรือลบสินค้าก่อน`)
+    return
+  }
+
+  if (confirm(`คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่ "${category.name}"? การกระทำนี้ไม่สามารถยกเลิกได้`)) {
+    router.delete(route('categories.destroy', category.id), {
+      onSuccess: () => {
+        toastStore.crud.deleted('หมวดหมู่')
+      },
+      onError: () => {
+        toastStore.crud.deleteError('หมวดหมู่')
+      },
+    })
+  }
+}
+
+defineExpose({
+  form,
+  clearFilters,
+  getStatusClass,
+  formatDate,
+  search,
+  deleteCategory,
+})
 </script>

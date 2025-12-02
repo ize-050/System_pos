@@ -21,6 +21,7 @@ class UpdateSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'customer_id' => 'nullable|exists:customers,id',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
             'customer_email' => 'nullable|email|max:255',
@@ -30,10 +31,10 @@ class UpdateSaleRequest extends FormRequest
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.total_price' => 'required|numeric|min:0',
             'subtotal' => 'required|numeric|min:0',
-            'tax_amount' => 'required|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,card,bank_transfer,e_wallet',
+            'payment_method' => 'required|in:cash,card,bank_transfer,e_wallet,customer_account',
             'payment_received' => 'required|numeric|min:0',
             'change_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',

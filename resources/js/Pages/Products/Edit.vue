@@ -55,6 +55,36 @@
                   <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
                 </div>
 
+                <!-- Barcode -->
+                <div>
+                  <label for="barcode" class="block text-sm font-medium text-gray-700">Barcode</label>
+                  <div class="mt-1 flex rounded-md shadow-sm">
+                    <input
+                      id="barcode"
+                      v-model="form.barcode"
+                      type="text"
+                      class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none"
+                      style="border-color: #E2E8F0;"
+                      onfocus="this.style.borderColor='#6B7B47'; this.style.boxShadow='0 0 0 3px rgba(107, 123, 71, 0.2)'"
+                      onblur="this.style.borderColor='#E2E8F0'; this.style.boxShadow='none'"
+                      :class="{ 'border-red-500': errors.barcode }"
+                      placeholder="สแกนหรือกรอก Barcode"
+                    />
+                    <button
+                      type="button"
+                      @click="generateBarcode"
+                      class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 focus:outline-none"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                      สร้างอัตโนมัติ
+                    </button>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-500">กดปุ่ม "สร้างอัตโนมัติ" เพื่อสร้าง Barcode ใหม่</p>
+                  <p v-if="errors.barcode" class="mt-1 text-sm text-red-600">{{ errors.barcode }}</p>
+                </div>
+
                 <!-- Brand -->
                 <div>
                   <label for="brand" class="block text-sm font-medium text-gray-700">ยี่ห้อ</label>
@@ -94,7 +124,7 @@
                   <label for="category_id" class="block text-sm font-medium text-gray-700">หมวดหมู่ *</label>
                   <select
                     id="category_id"
-                    v-model="form.category_id"
+                    v-model.number="form.category_id"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none"
                     style="border-color: #E2E8F0;"
                     onfocus="this.style.borderColor='#6B7B47'; this.style.boxShadow='0 0 0 3px rgba(107, 123, 71, 0.2)'"
@@ -150,7 +180,7 @@
                   <label for="weight" class="block text-sm font-medium text-gray-700">น้ำหนัก (กิโลกรัม)</label>
                   <input
                     id="weight"
-                    v-model="form.weight"
+                    v-model.number="form.weight"
                     type="number"
                     step="0.01"
                     min="0"
@@ -169,7 +199,7 @@
                   <label for="cost_price" class="block text-sm font-medium text-gray-700">ราคาทุน *</label>
                   <input
                     id="cost_price"
-                    v-model="form.cost_price"
+                    v-model.number="form.cost_price"
                     type="number"
                     step="0.01"
                     min="0"
@@ -188,7 +218,7 @@
                   <label for="selling_price" class="block text-sm font-medium text-gray-700">ราคาขาย *</label>
                   <input
                     id="selling_price"
-                    v-model="form.selling_price"
+                    v-model.number="form.selling_price"
                     type="number"
                     step="0.01"
                     min="0"
@@ -207,7 +237,7 @@
                   <label for="current_stock" class="block text-sm font-medium text-gray-700">จำนวนคงเหลือ *</label>
                   <input
                     id="current_stock"
-                    v-model="form.current_stock"
+                    v-model.number="form.current_stock"
                     type="number"
                     min="0"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none"
@@ -225,7 +255,7 @@
                   <label for="reorder_point" class="block text-sm font-medium text-gray-700">จุดสั่งซื้อใหม่ *</label>
                   <input
                     id="reorder_point"
-                    v-model="form.reorder_point"
+                    v-model.number="form.reorder_point"
                     type="number"
                     min="0"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none"
@@ -243,7 +273,7 @@
                   <label for="warranty_period" class="block text-sm font-medium text-gray-700">ระยะเวลาการรับประกัน (เดือน)</label>
                   <input
                     id="warranty_period"
-                    v-model="form.warranty_period"
+                    v-model.number="form.warranty_period"
                     type="number"
                     min="0"
                     placeholder="จำนวนเดือน"
@@ -425,25 +455,57 @@ export default {
       return page.props.errors || {}
     })
 
+    const parseNumber = (value, fallback = null) => {
+      if (value === null || value === undefined || value === '') {
+        return fallback
+      }
+
+      const parsed = Number(value)
+      return Number.isNaN(parsed) ? fallback : parsed
+    }
+
+    const parseBoolean = (value) => {
+      if (value === true || value === false) {
+        return value
+      }
+
+      if (value === 1 || value === '1') {
+        return true
+      }
+
+      if (value === 0 || value === '0') {
+        return false
+      }
+
+      return Boolean(value)
+    }
+
     const form = useForm({
-      sku: props.product.sku,
-      name: props.product.name,
-      description: props.product.description || '',
-      category_id: props.product.category_id,
-      brand: props.product.brand || '',
-      model: props.product.model || '',
-      size: props.product.size || '',
-      weight: props.product.weight || '',
-      unit: props.product.unit,
-      cost_price: props.product.cost_price,
-      selling_price: props.product.selling_price,
-      current_stock: props.product.current_stock,
-      reorder_point: props.product.reorder_point,
-      warranty_period: props.product.warranty_period || '',
-      specifications: props.product.specifications || '',
+      sku: props.product.sku ?? '',
+      barcode: props.product.barcode ?? '',
+      name: props.product.name ?? '',
+      description: props.product.description ?? '',
+      category_id: props.product.category_id ?? '',
+      brand: props.product.brand ?? '',
+      model: props.product.model ?? '',
+      size: props.product.size ?? '',
+      weight: parseNumber(props.product.weight, null),
+      unit: props.product.unit ?? '',
+      cost_price: parseNumber(
+        props.product.cost_price,
+        parseNumber(props.product.selling_price, 0)
+      ),
+      selling_price: parseNumber(
+        props.product.selling_price,
+        parseNumber(props.product.cost_price, 0)
+      ),
+      current_stock: parseNumber(props.product.current_stock, 0),
+      reorder_point: parseNumber(props.product.reorder_point, 0),
+      warranty_period: parseNumber(props.product.warranty_period, null),
+      specifications: props.product.specifications ?? '',
       image: null,
-      notes: props.product.notes || '',
-      is_active: props.product.is_active,
+      notes: props.product.notes ?? '',
+      is_active: parseBoolean(props.product.is_active),
     })
 
     const handleImageUpload = (event) => {
@@ -463,6 +525,13 @@ export default {
       imagePreview.value = props.product.image_url
     }
 
+    // Generate Barcode automatically
+    const generateBarcode = () => {
+      const timestamp = Date.now().toString().slice(-10)
+      const random = Math.floor(Math.random() * 100).toString().padStart(2, '0')
+      form.barcode = timestamp + random
+    }
+
     const removeImage = () => {
       form.image = null
       imagePreview.value = null
@@ -470,7 +539,11 @@ export default {
     }
 
     const submit = () => {
-      form.put(route('products.update', props.product.id), {
+      form.transform((data) => ({
+        ...data,
+        _method: 'put',
+      }))
+      .post(route('products.update', props.product.id), {
         forceFormData: true,
         onSuccess: () => {
           toastStore.crud.updated('สินค้า')
@@ -497,6 +570,7 @@ export default {
       handleImageUpload,
       removeImage,
       submit,
+      generateBarcode,
     }
   },
 }

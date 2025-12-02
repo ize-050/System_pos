@@ -81,8 +81,15 @@ onMounted(() => {
   }
 });
 
-const formatDate = (date) => new Date(date).toLocaleString('th-TH');
-const formatCurrency = (amount) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleString('th-TH')
+}
+
+const formatCurrency = (amount) => {
+  if (!amount || isNaN(amount)) return '฿0.00'
+  return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount)
+}
 </script>
 
 <style>
