@@ -45,7 +45,7 @@ class ReceiptSettingsController extends Controller
             'show_barcode' => 'boolean',
             'show_notes' => 'boolean',
             'receipt_notes' => 'nullable|string',
-            'printer_type' => 'required|in:a4,thermal_80mm,thermal_58mm',
+            'printer_type' => 'required|in:a4,thermal_80mm,thermal_58mm,dot_matrix',
         ]);
 
         $settings = ReceiptSettings::getSettings();

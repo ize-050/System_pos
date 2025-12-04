@@ -350,7 +350,8 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
+/* Normal styles */
 .barcode-svg {
   max-width: 100%;
   height: auto;
@@ -361,32 +362,59 @@ onMounted(() => {
   height: auto;
 }
 
+/* Print styles - ซ่อนทุกอย่างยกเว้น print-area */
 @media print {
+  /* ซ่อน Layout หลัก */
+  body * {
+    visibility: hidden;
+  }
+
+  /* แสดงเฉพาะ print-area */
+  #print-area,
+  #print-area * {
+    visibility: visible !important;
+  }
+
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    display: block !important;
+  }
+
   .print-grid {
     display: grid;
-    gap: 4px;
+    gap: 8px;
     padding: 10px;
   }
 
   .label-item {
     border: 1px dashed #ccc;
-    padding: 4px;
+    padding: 6px;
     text-align: center;
     page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .label-name {
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 100%;
+    margin-bottom: 2px;
   }
 
   .label-price {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: bold;
-    color: #dc2626;
+    color: #000;
+    margin-bottom: 2px;
   }
 
   .label-barcode {
@@ -395,8 +423,14 @@ onMounted(() => {
   }
 
   .label-sku {
-    font-size: 7px;
-    color: #666;
+    font-size: 8px;
+    color: #333;
+    margin-top: 2px;
   }
+
+  /* Label sizes for print */
+  .w-24 { width: 90px !important; height: 60px !important; }
+  .w-32 { width: 120px !important; height: 75px !important; }
+  .w-44 { width: 165px !important; height: 105px !important; }
 }
 </style>

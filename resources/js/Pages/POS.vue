@@ -860,7 +860,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
@@ -877,6 +877,58 @@ const currentDateTime = ref('')
 const barcodeInput = ref(null)
 const barcodeSearch = ref('')
 const barcodeError = ref('')
+
+// Global Barcode Buffer (สำหรับยิง Barcode โดยไม่ต้องคลิกช่อง)
+let barcodeBuffer = ''
+let barcodeTimeout = null
+
+const handleGlobalKeydown = (event) => {
+  // ไม่ทำงานถ้ากำลังพิมพ์ในช่อง input อื่น (ยกเว้น barcode input)
+  const activeElement = document.activeElement
+  const isInputField = activeElement.tagName === 'INPUT' || 
+                       activeElement.tagName === 'TEXTAREA' ||
+                       activeElement.isContentEditable
+  
+  // ถ้าอยู่ใน barcode input อยู่แล้ว ให้ทำงานปกติ
+  if (activeElement === barcodeInput.value) {
+    return
+  }
+  
+  // ถ้าอยู่ใน input อื่น (เช่น ค้นหา, จำนวน) ไม่ต้องจับ barcode
+  if (isInputField) {
+    return
+  }
+  
+  // ถ้ากด Enter และมี buffer ให้ค้นหา
+  if (event.key === 'Enter' && barcodeBuffer.length > 0) {
+    event.preventDefault()
+    barcodeSearch.value = barcodeBuffer
+    searchByBarcode()
+    barcodeBuffer = ''
+    return
+  }
+  
+  // จับเฉพาะตัวเลขและตัวอักษร (Barcode ปกติ)
+  if (event.key.length === 1 && /[a-zA-Z0-9]/.test(event.key)) {
+    event.preventDefault()
+    barcodeBuffer += event.key
+    
+    // Clear timeout เดิม
+    if (barcodeTimeout) {
+      clearTimeout(barcodeTimeout)
+    }
+    
+    // ตั้ง timeout ใหม่ - ถ้าไม่มีการพิมพ์ต่อใน 100ms ให้ค้นหา
+    // (Scanner ยิงเร็วมาก ถ้าพิมพ์มือจะช้ากว่านี้)
+    barcodeTimeout = setTimeout(() => {
+      if (barcodeBuffer.length >= 3) { // Barcode ต้องมีอย่างน้อย 3 ตัว
+        barcodeSearch.value = barcodeBuffer
+        searchByBarcode()
+      }
+      barcodeBuffer = ''
+    }, 100)
+  }
+}
 
 // Products and categories
 const products = ref([])
@@ -1657,11 +1709,22 @@ onMounted(async () => {
   updateDateTime()
   setInterval(updateDateTime, 1000)
 
+  // เพิ่ม Global Barcode Listener
+  document.addEventListener('keydown', handleGlobalKeydown)
+
   await Promise.all([
     loadProducts(),
     loadCategories(),
     loadPromotions()
   ])
+})
+
+onUnmounted(() => {
+  // ลบ Global Barcode Listener เมื่อออกจากหน้า
+  document.removeEventListener('keydown', handleGlobalKeydown)
+  if (barcodeTimeout) {
+    clearTimeout(barcodeTimeout)
+  }
 })
 </script>
 

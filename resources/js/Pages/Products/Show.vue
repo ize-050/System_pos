@@ -93,6 +93,10 @@
                     <dd class="text-sm text-gray-900 font-mono">{{ product.sku }}</dd>
                   </div>
                   <div>
+                    <dt class="text-sm font-medium text-gray-500">Barcode</dt>
+                    <dd class="text-sm text-gray-900 font-mono">{{ product.barcode || '-' }}</dd>
+                  </div>
+                  <div>
                     <dt class="text-sm font-medium text-gray-500">หมวดหมู่</dt>
                     <dd class="text-sm text-gray-900">{{ product.category?.name || '-' }}</dd>
                   </div>

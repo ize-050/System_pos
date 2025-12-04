@@ -28,6 +28,7 @@ class UpdateProductRequest extends FormRequest
 
         return [
             'sku' => 'nullable|string|max:50|unique:products,sku,' . $productId,
+            'barcode' => 'nullable|string|max:50|unique:products,barcode,' . $productId,
             'name' => 'required|string|max:200',
             'description' => 'nullable|string',
             'category_id' => 'required|exists:product_categories,id',
@@ -70,6 +71,7 @@ class UpdateProductRequest extends FormRequest
 
         $fields = [
             'sku',
+            'barcode',
             'name',
             'description',
             'category_id',
