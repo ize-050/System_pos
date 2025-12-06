@@ -268,7 +268,7 @@ const printPO = () => {
 
 @media print {
   /* ซ่อนส่วนที่ไม่ต้องการพิมพ์ */
-  nav, header, button, .no-print, aside, footer {
+  nav, header, button, .no-print, aside, footer, a {
     display: none !important;
   }
   
@@ -277,32 +277,43 @@ const printPO = () => {
     display: block !important;
   }
   
-  /* ปรับแต่งหน้ากระดาษ */
+  /* ปรับแต่งหน้ากระดาษ - ลด margin ให้อยู่หน้าเดียว */
   @page {
     size: A4;
-    margin: 1.5cm;
+    margin: 8mm;
   }
   
   body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
     background: white !important;
+    font-size: 11px !important;
   }
   
   /* ปรับ container */
   .max-w-7xl {
     max-width: 100% !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
   
   .py-12 {
     padding: 0 !important;
   }
   
+  .p-6 {
+    padding: 8px !important;
+  }
+  
   /* ทำให้ตารางดูดีขึ้นเมื่อพิมพ์ */
   table {
     page-break-inside: avoid;
     border-collapse: collapse !important;
+    font-size: 10px !important;
+  }
+  
+  th, td {
+    padding: 4px 6px !important;
   }
   
   /* แสดงเฉพาะเนื้อหาหลัก */
@@ -311,23 +322,95 @@ const printPO = () => {
     border-radius: 0 !important;
   }
   
-  /* ปรับ font size */
+  /* ปรับ font size ให้เล็กลง */
   .print-header h1 {
-    font-size: 28px !important;
+    font-size: 20px !important;
+    margin-bottom: 2px !important;
   }
   
   .print-header h2 {
-    font-size: 18px !important;
+    font-size: 14px !important;
+  }
+  
+  .print-header .mb-6 {
+    margin-bottom: 8px !important;
+  }
+  
+  .print-header .mb-8 {
+    margin-bottom: 10px !important;
+  }
+  
+  /* ลดขนาด grid gap */
+  .grid.gap-8 {
+    gap: 12px !important;
+  }
+  
+  .grid.gap-4 {
+    gap: 8px !important;
+  }
+  
+  /* ลดขนาด padding ของ box */
+  .border-2.p-4 {
+    padding: 8px !important;
   }
   
   /* ปรับ border */
   .border-2 {
-    border-width: 2px !important;
+    border-width: 1px !important;
   }
   
   /* ปรับสี background */
   .bg-gray-50, .bg-gray-100 {
     background-color: #f9fafb !important;
+  }
+  
+  /* ลดขนาด text */
+  .text-lg {
+    font-size: 12px !important;
+  }
+  
+  .text-xl {
+    font-size: 14px !important;
+  }
+  
+  .text-3xl {
+    font-size: 18px !important;
+  }
+  
+  .text-sm {
+    font-size: 9px !important;
+  }
+  
+  .text-base {
+    font-size: 10px !important;
+  }
+  
+  /* ลดขนาดลายเซ็น */
+  .mt-12 {
+    margin-top: 20px !important;
+  }
+  
+  .mt-16 {
+    margin-top: 30px !important;
+  }
+  
+  /* ลด margin bottom */
+  .mb-6 {
+    margin-bottom: 8px !important;
+  }
+  
+  .mb-8 {
+    margin-bottom: 10px !important;
+  }
+  
+  /* Logo size */
+  .h-20 {
+    height: 50px !important;
+  }
+  
+  /* ยอดรวม */
+  .w-96 {
+    width: 250px !important;
   }
 }
 </style>

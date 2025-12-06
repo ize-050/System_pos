@@ -53,12 +53,23 @@ class ReceiptController extends Controller
     /**
      * Print receipt (optimized view).
      */
-    public function print($saleId)
+    public function print(Request $request, $saleId)
     {
         $sale = Sale::with(['customer', 'saleItems.product', 'cashier'])
             ->findOrFail($saleId);
 
         $settings = ReceiptSettings::getSettings();
+
+        // Check if tax invoice type is requested (from query param or sale's invoice_type)
+        $invoiceType = $request->query('type', $sale->invoice_type ?? 'cash_bill');
+        
+        // Override sale's invoice_type to match the requested type
+        $sale->invoice_type = $invoiceType;
+        
+        // Override printer type for tax invoice
+        if ($invoiceType === 'tax_invoice') {
+            $settings->printer_type = 'dot_matrix';
+        }
 
         // Generate QR Code
         $qrCode = null;
@@ -78,6 +89,7 @@ class ReceiptController extends Controller
             'sale' => $sale,
             'settings' => $settings,
             'qrCode' => $qrCode,
+            'invoiceType' => $invoiceType,
         ]);
     }
 

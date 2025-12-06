@@ -102,8 +102,8 @@
             </div>
 
             <!-- Products Table -->
-            <div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
-              <table class="min-w-full divide-y divide-gray-200">
+            <div class="bg-white rounded-lg shadow overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+              <table class="min-w-full divide-y divide-gray-200" style="min-width: 1000px;">
                 <thead class="bg-gray-50">
                   <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -277,7 +277,6 @@
 import { ref, computed, watch } from 'vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import toastStore from '@/Stores/toastStore'
 
 const props = defineProps({
     products: Object,
@@ -290,14 +289,14 @@ const fileInput = ref(null)
 
 // Reactive filters
 const search = ref(props.filters.search || '')
-const selectedCategory = ref(props.filters.category || '')
+const selectedCategory = ref(props.filters.category_id || '')
 const selectedStatus = ref(props.filters.status || '')
 
 // Watch for filter changes and update URL
 watch([search, selectedCategory, selectedStatus], () => {
     router.get(route('products.index'), {
         search: search.value,
-        category: selectedCategory.value,
+        category_id: selectedCategory.value,
         status: selectedStatus.value
     }, {
         preserveState: true,
@@ -330,25 +329,10 @@ const getStatusClass = (product) => {
 // Delete product
 const deleteProduct = (productId) => {
     if (confirm('คุณแน่ใจหรือไม่ที่จะลบสินค้านี้?')) {
-        router.delete(route('products.destroy', productId), {
-            onSuccess: () => {
-                toastStore.crud.deleted('สินค้า')
-            },
-            onError: () => {
-                toastStore.crud.deleteError('สินค้า')
-            }
-        })
+        router.delete(route('products.destroy', productId))
     }
 }
 
-// Show flash messages
-if (page.props.flash?.success) {
-    toastStore.success(page.props.flash.success)
-}
-
-if (page.props.flash?.error) {
-    toastStore.error(page.props.flash.error)
-}
 
 // Download template function
 const downloadTemplate = () => {

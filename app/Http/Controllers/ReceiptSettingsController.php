@@ -35,7 +35,7 @@ class ReceiptSettingsController extends Controller
             'shop_facebook' => 'nullable|string|max:255',
             'shop_line_id' => 'nullable|string|max:100',
             'tax_id' => 'nullable|string|max:50',
-            'logo' => 'nullable|image|max:2048',
+            'logo' => 'nullable|image|max:5120',
             'promptpay_number' => 'nullable|string|max:50',
             'promptpay_name' => 'nullable|string|max:255',
             'show_logo' => 'boolean',

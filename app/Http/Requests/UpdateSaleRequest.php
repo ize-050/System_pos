@@ -34,7 +34,7 @@ class UpdateSaleRequest extends FormRequest
             'tax_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,card,bank_transfer,e_wallet,customer_account',
+            'payment_method' => 'required|in:cash,transfer,credit_card,customer_account',
             'payment_received' => 'required|numeric|min:0',
             'change_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',

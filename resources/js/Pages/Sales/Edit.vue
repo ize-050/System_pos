@@ -266,6 +266,108 @@
                                 </div>
                             </div>
 
+                            <!-- Invoice Type Selection -->
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                                <div class="p-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">ประเภทบิล</h3>
+                                    
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button 
+                                            type="button"
+                                            @click="form.invoice_type = 'cash_bill'" 
+                                            :class="form.invoice_type === 'cash_bill' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                                            class="py-3 px-4 rounded-lg font-semibold text-sm border-2 transition-all flex flex-col items-center"
+                                        >
+                                            <span class="text-2xl mb-1">🧾</span>
+                                            <span>บิลเงินสด</span>
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            @click="form.invoice_type = 'tax_invoice'" 
+                                            :class="form.invoice_type === 'tax_invoice' ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                                            class="py-3 px-4 rounded-lg font-semibold text-sm border-2 transition-all flex flex-col items-center"
+                                        >
+                                            <span class="text-2xl mb-1">📄</span>
+                                            <span>ใบกำกับภาษี</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Tax Invoice Customer Form -->
+                                    <div v-if="form.invoice_type === 'tax_invoice'" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                                        <h4 class="text-sm font-semibold text-green-800 mb-3">ข้อมูลใบกำกับภาษี</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">ชื่อบริษัท/ชื่อ-นามสกุล *</label>
+                                                <input
+                                                    v-model="form.tax_invoice_customer.company_name"
+                                                    type="text"
+                                                    class="w-full px-3 py-2 text-sm border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                    placeholder="ชื่อบริษัท หรือ ชื่อ-นามสกุล"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">ที่อยู่ *</label>
+                                                <textarea
+                                                    v-model="form.tax_invoice_customer.address"
+                                                    rows="2"
+                                                    class="w-full px-3 py-2 text-sm border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                    placeholder="ที่อยู่สำหรับออกใบกำกับภาษี"
+                                                ></textarea>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-700 mb-1">เลขประจำตัวผู้เสียภาษี</label>
+                                                <input
+                                                    v-model="form.tax_invoice_customer.tax_id"
+                                                    type="text"
+                                                    maxlength="13"
+                                                    class="w-full px-3 py-2 text-sm border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                    placeholder="เลข 13 หลัก (ไม่บังคับ)"
+                                                />
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">เบอร์โทร</label>
+                                                    <input
+                                                        v-model="form.tax_invoice_customer.phone"
+                                                        type="text"
+                                                        class="w-full px-3 py-2 text-sm border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                        placeholder="เบอร์โทรศัพท์"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-medium text-gray-700 mb-1">สาขา</label>
+                                                    <input
+                                                        v-model="form.tax_invoice_customer.branch"
+                                                        type="text"
+                                                        class="w-full px-3 py-2 text-sm border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                        placeholder="สำนักงานใหญ่ / สาขา"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                                <div class="p-6">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">วิธีชำระเงิน</h3>
+                                    
+                                    <div>
+                                        <select
+                                            v-model="form.payment_method"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="cash">เงินสด</option>
+                                            <option value="transfer">โอนเงิน</option>
+                                            <option value="credit_card">บัตรเครดิต</option>
+                                            <option value="customer_account">บัญชีลูกค้า</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Notes -->
                             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                                 <div class="p-6">
@@ -330,6 +432,14 @@ const form = useForm({
     change_amount: props.sale.change_amount || 0,
     notes: props.sale.notes || '',
     promotion_id: props.sale.promotion_id || null,
+    invoice_type: props.sale.invoice_type || 'cash_bill',
+    tax_invoice_customer: props.sale.tax_invoice_customer || {
+        company_name: '',
+        address: '',
+        tax_id: '',
+        phone: '',
+        branch: ''
+    },
 })
 
 const productSearch = ref('')
@@ -506,6 +616,9 @@ const submit = () => {
         onError: (errors) => {
             console.error('Error updating sale:', errors)
             alert('เกิดข้อผิดพลาด: ' + (errors.message || 'ไม่สามารถบันทึกได้'))
+        },
+        onFinish: () => {
+            form.processing = false
         }
     })
 }

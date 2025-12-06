@@ -290,6 +290,7 @@ const submit = () => {
   }
 
   form.put(route('customers.update', props.customer.id), {
+    preserveScroll: false,
     onSuccess: () => {
       success('บันทึกข้อมูลสำเร็จ', 'แก้ไขข้อมูลลูกค้าเรียบร้อยแล้ว')
     },
@@ -299,6 +300,9 @@ const submit = () => {
       } else {
         error('ระบบเกิดข้อผิดพลาด', 'กรุณาลองใหม่อีกครั้ง')
       }
+    },
+    onFinish: () => {
+      form.processing = false
     }
   })
 }

@@ -7,10 +7,30 @@
       <div v-if="settings.tax_id" class="text-xs">Tax ID: {{ settings.tax_id }}</div>
     </div>
 
+    <!-- Tax Invoice Badge -->
+    <div v-if="sale.invoice_type === 'tax_invoice'" class="text-center my-2 py-1 border border-dashed">
+      <div class="font-bold text-sm">ใบกำกับภาษี</div>
+      <div class="text-xs">TAX INVOICE</div>
+    </div>
+
     <div class="border-t border-b border-dashed py-2 my-2 text-xs">
-      <div>Receipt: {{ sale.sale_number }}</div>
-      <div>Date: {{ formatDate(sale.created_at) }}</div>
-      <div v-if="sale.customer">Customer: {{ sale.customer.name }}</div>
+      <div>เลขที่: {{ sale.sale_number }}</div>
+      <div>วันที่: {{ formatDate(sale.created_at) }}</div>
+      
+      <!-- Tax Invoice Customer Info -->
+      <template v-if="sale.invoice_type === 'tax_invoice' && sale.tax_invoice_customer">
+        <div class="mt-1 pt-1 border-t border-dashed">
+          <div class="font-bold">ข้อมูลผู้ซื้อ:</div>
+          <div>{{ sale.tax_invoice_customer.company_name }}</div>
+          <div v-if="sale.tax_invoice_customer.address" class="text-xs">{{ sale.tax_invoice_customer.address }}</div>
+          <div v-if="sale.tax_invoice_customer.tax_id">Tax ID: {{ sale.tax_invoice_customer.tax_id }}</div>
+        </div>
+      </template>
+      
+      <!-- Regular Customer -->
+      <template v-else>
+        <div v-if="sale.customer">ลูกค้า: {{ sale.customer.name || sale.customer.company_name }}</div>
+      </template>
     </div>
 
     <table class="w-full text-xs mb-2">
@@ -25,6 +45,8 @@
 
     <div class="border-t border-dashed pt-2 text-xs">
       <div class="flex justify-between"><span>Subtotal:</span><span>{{ formatCurrency(sale.subtotal) }}</span></div>
+      <div v-if="sale.discount_amount > 0" class="flex justify-between text-green-600"><span>ส่วนลด:</span><span>-{{ formatCurrency(sale.discount_amount) }}</span></div>
+      <div v-if="sale.shipping_fee > 0" class="flex justify-between"><span>ค่าจัดส่ง:</span><span>{{ formatCurrency(sale.shipping_fee) }}</span></div>
       <div v-if="settings.show_vat" class="flex justify-between"><span>VAT 7%:</span><span>{{ formatCurrency(sale.vat_amount) }}</span></div>
       <div class="flex justify-between font-bold text-base"><span>TOTAL:</span><span>{{ formatCurrency(sale.total_amount) }}</span></div>
       <div class="flex justify-between"><span>Paid:</span><span>{{ formatCurrency(sale.paid_amount) }}</span></div>

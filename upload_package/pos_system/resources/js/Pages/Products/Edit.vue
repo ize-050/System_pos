@@ -463,10 +463,10 @@ export default {
       put(route('products.update', props.product.id), {
         forceFormData: true,
         onSuccess: () => {
-          toast.success('แก้ไขสินค้าเรียบร้อยแล้ว', {
-            position: 'top-right',
-            autoClose: 3000,
-          })
+          // toast.success('แก้ไขสินค้าเรียบร้อยแล้ว', {
+          //   position: 'top-right',
+          //   autoClose: 3000,
+          // })
         },
         onError: () => {
           toast.error('เกิดข้อผิดพลาดในการแก้ไขสินค้า', {

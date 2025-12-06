@@ -191,9 +191,18 @@ class POSController extends Controller
             'customer_id' => 'nullable|exists:customers,id',
             'received_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
+            'shipping_fee' => 'nullable|numeric|min:0',
             'tax_amount' => 'nullable|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
             'promotion_id' => 'nullable|exists:promotions,id',
+            // Invoice type validation
+            'invoice_type' => 'nullable|in:cash_bill,tax_invoice',
+            'tax_invoice_customer' => 'nullable|array',
+            'tax_invoice_customer.company_name' => 'nullable|string|max:255',
+            'tax_invoice_customer.address' => 'nullable|string|max:500',
+            'tax_invoice_customer.tax_id' => 'nullable|string|max:20',
+            'tax_invoice_customer.phone' => 'nullable|string|max:20',
+            'tax_invoice_customer.branch' => 'nullable|string|max:100',
         ]);
 
         // Debug: Log customer_id
@@ -208,6 +217,7 @@ class POSController extends Controller
             });
 
             $discountAmount = $request->discount_amount ?? 0;
+            $shippingFee = $request->shipping_fee ?? 0;
             $taxAmount = $request->tax_amount ?? 0;
             $totalAmount = $request->total_amount;
 
@@ -218,6 +228,7 @@ class POSController extends Controller
                 'cashier_id' => auth()->id(),
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
+                'shipping_fee' => $shippingFee,
                 'tax_amount' => $taxAmount,
                 'total_amount' => $totalAmount,
                 'payment_method' => $request->payment_method,
@@ -226,6 +237,11 @@ class POSController extends Controller
                 'status' => 'completed',
                 'sale_date' => now(),
                 'promotion_id' => $request->promotion_id,
+                // Invoice type and tax invoice customer
+                'invoice_type' => $request->invoice_type ?? 'cash_bill',
+                'tax_invoice_customer' => $request->invoice_type === 'tax_invoice'
+                    ? $request->tax_invoice_customer
+                    : null,
             ]);
 
             // Create sale items and update stock

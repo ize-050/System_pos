@@ -240,6 +240,11 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.put(route('users.update', props.user.id))
+  form.put(route('users.update', props.user.id), {
+    preserveScroll: false,
+    onFinish: () => {
+      form.processing = false
+    }
+  })
 }
 </script>

@@ -154,6 +154,11 @@ const formatCurrency = (amount) => {
 };
 
 const submit = () => {
-  form.put(route('purchase-orders.update', props.purchaseOrder.id));
+  form.put(route('purchase-orders.update', props.purchaseOrder.id), {
+    preserveScroll: false,
+    onFinish: () => {
+      form.processing = false
+    }
+  });
 };
 </script>

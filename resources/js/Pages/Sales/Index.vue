@@ -117,9 +117,9 @@
                         >
                             <option value="">วิธีการชำระเงินทั้งหมด</option>
                             <option value="cash">เงินสด</option>
-                            <option value="card">บัตรเครดิต</option>
-                            <option value="bank_transfer">โอนเงิน</option>
-                            <option value="e_wallet">กระเป๋าเงินอิเล็กทรอนิกส์</option>
+                            <option value="transfer">โอนเงิน/QR</option>
+                            <option value="credit_card">บัตรเครดิต</option>
+                            <option value="customer_account">บัญชีลูกค้า</option>
                         </select>
                     </div>
                     <div>
@@ -180,8 +180,10 @@
                                         </svg>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-semibold text-gray-900">#{{ sale.id.toString().padStart(6, '0') }}</div>
-                                        <div class="text-xs text-gray-500">{{ sale.status || 'completed' }}</div>
+                                        <div class="text-sm font-semibold text-gray-900">{{ sale.sale_number || '#' + sale.id.toString().padStart(6, '0') }}</div>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" :class="getStatusClass(sale.status)">
+                                            {{ getStatusLabel(sale.status) }}
+                                        </span>
                                     </div>
                                 </div>
                             </td>
@@ -210,6 +212,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-lg font-bold text-gray-900">฿{{ formatPrice(sale.total_amount) }}</div>
+                                <div v-if="sale.refunded_amount > 0" class="text-xs text-red-500">
+                                    คืน: ฿{{ formatPrice(sale.refunded_amount) }}
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div v-if="sale.promotion" class="flex items-center">
@@ -403,7 +408,10 @@ const formatPaymentMethod = (method) => {
     const methods = {
         cash: 'เงินสด',
         card: 'บัตรเครดิต',
-        bank_transfer: 'โอนเงิน',
+        credit_card: 'บัตรเครดิต',
+        transfer: 'โอนเงิน/QR',
+        bank_transfer: 'โอนเงิน/QR',
+        customer_account: 'บัญชีลูกค้า',
         e_wallet: 'กระเป๋าเงินอิเล็กทรอนิกส์'
     }
     return methods[method] || method
@@ -417,7 +425,10 @@ const getPaymentMethodClass = (method) => {
     const classes = {
         cash: 'bg-green-100 text-green-800',
         card: 'bg-blue-100 text-blue-800',
+        credit_card: 'bg-blue-100 text-blue-800',
+        transfer: 'bg-purple-100 text-purple-800',
         bank_transfer: 'bg-purple-100 text-purple-800',
+        customer_account: 'bg-yellow-100 text-yellow-800',
         e_wallet: 'bg-orange-100 text-orange-800'
     }
     return classes[method] || 'bg-gray-100 text-gray-800'
@@ -445,6 +456,28 @@ const getPromotionTypeLabel = (type) => {
         buy_x_get_y: 'ซื้อ X ได้ Y'
     }
     return types[type] || type
+}
+
+const getStatusLabel = (status) => {
+    const labels = {
+        pending: 'รอดำเนินการ',
+        completed: 'เสร็จสิ้น',
+        cancelled: 'ยกเลิก',
+        refunded: 'คืนสินค้าแล้ว',
+        partial_refunded: 'คืนบางส่วน'
+    }
+    return labels[status] || status || 'เสร็จสิ้น'
+}
+
+const getStatusClass = (status) => {
+    const classes = {
+        pending: 'bg-yellow-100 text-yellow-800',
+        completed: 'bg-green-100 text-green-800',
+        cancelled: 'bg-red-100 text-red-800',
+        refunded: 'bg-purple-100 text-purple-800',
+        partial_refunded: 'bg-orange-100 text-orange-800'
+    }
+    return classes[status] || 'bg-green-100 text-green-800'
 }
 
 // Print receipt function

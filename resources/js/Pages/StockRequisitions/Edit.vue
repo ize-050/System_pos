@@ -229,7 +229,12 @@ const formatNumber = (num) => {
 }
 
 const submit = () => {
-  form.put(route('stock-requisitions.update', props.requisition.id))
+  form.put(route('stock-requisitions.update', props.requisition.id), {
+    preserveScroll: false,
+    onFinish: () => {
+      form.processing = false
+    }
+  })
 }
 
 const deleteRequisition = () => {

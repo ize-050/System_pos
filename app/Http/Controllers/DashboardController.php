@@ -139,13 +139,17 @@ class DashboardController extends Controller
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
         $groupBy = $request->get('group_by', 'day'); // day, week, month
 
+        // Convert to Carbon for proper date range (include full end date)
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
         $query = Sale::select(
             DB::raw($this->getDateGrouping($groupBy) . ' as period'),
             DB::raw('SUM(total_amount) as total_sales'),
             DB::raw('COUNT(*) as total_orders'),
             DB::raw('AVG(total_amount) as average_order')
         )
-        ->whereBetween('created_at', [$startDate, $endDate])
+        ->whereBetween('created_at', [$startDateTime, $endDateTime])
         ->groupBy('period')
         ->orderBy('period');
 
@@ -176,6 +180,10 @@ class DashboardController extends Controller
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->toDateString());
         $limit = $request->get('limit', 20);
 
+        // Convert to Carbon for proper date range (include full end date)
+        $startDateTime = Carbon::parse($startDate)->startOfDay();
+        $endDateTime = Carbon::parse($endDate)->endOfDay();
+
         $productData = DB::table('sale_items')
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
@@ -190,7 +198,7 @@ class DashboardController extends Controller
                 DB::raw('AVG(sale_items.unit_price) as average_price'),
                 DB::raw('COUNT(DISTINCT sales.id) as orders_count')
             )
-            ->whereBetween('sales.created_at', [$startDate, $endDate])
+            ->whereBetween('sales.created_at', [$startDateTime, $endDateTime])
             ->groupBy('products.id', 'products.name', 'products.image_path', 'categories.name')
             ->orderBy('total_revenue', 'desc')
             ->limit($limit)

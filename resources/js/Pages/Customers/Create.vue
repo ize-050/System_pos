@@ -275,6 +275,7 @@ const submit = () => {
   }
 
   form.post(route('customers.store'), {
+    preserveScroll: false,
     onSuccess: () => {
       success('บันทึกข้อมูลสำเร็จ', 'เพิ่มลูกค้าใหม่เรียบร้อยแล้ว')
     },
@@ -284,6 +285,9 @@ const submit = () => {
       } else {
         error('ระบบเกิดข้อผิดพลาด', 'กรุณาลองใหม่อีกครั้ง')
       }
+    },
+    onFinish: () => {
+      form.processing = false
     }
   })
 }

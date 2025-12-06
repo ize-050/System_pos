@@ -176,7 +176,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
-import toastStore from '@/Stores/toastStore'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { onMounted, reactive, watch } from 'vue'
 import { debounce } from 'lodash'
@@ -199,15 +198,6 @@ const form = reactive({
   status: props.filters?.status || '',
 })
 
-onMounted(() => {
-  if (page.props.flash?.success) {
-    toastStore.success(page.props.flash.success)
-  }
-
-  if (page.props.flash?.error) {
-    toastStore.error(page.props.flash.error)
-  }
-})
 
 const performSearch = () => {
   router.get(route('categories.index'), { ...form }, {
@@ -253,19 +243,12 @@ const search = () => {
 
 const deleteCategory = (category) => {
   if (category.products_count > 0) {
-    toastStore.error(`ไม่สามารถลบ "${category.name}" ได้ เนื่องจากมีสินค้า ${category.products_count} รายการ กรุณาย้ายหรือลบสินค้าก่อน`)
+    alert(`ไม่สามารถลบ "${category.name}" ได้ เนื่องจากมีสินค้า ${category.products_count} รายการ กรุณาย้ายหรือลบสินค้าก่อน`)
     return
   }
 
   if (confirm(`คุณแน่ใจหรือไม่ที่จะลบหมวดหมู่ "${category.name}"? การกระทำนี้ไม่สามารถยกเลิกได้`)) {
-    router.delete(route('categories.destroy', category.id), {
-      onSuccess: () => {
-        toastStore.crud.deleted('หมวดหมู่')
-      },
-      onError: () => {
-        toastStore.crud.deleteError('หมวดหมู่')
-      },
-    })
+    router.delete(route('categories.destroy', category.id))
   }
 }
 

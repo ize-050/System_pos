@@ -220,6 +220,11 @@ const form = useForm({
 })
 
 const submit = () => {
-  form.post(route('users.store'))
+  form.post(route('users.store'), {
+    preserveScroll: false,
+    onFinish: () => {
+      form.processing = false
+    }
+  })
 }
 </script>

@@ -369,8 +369,12 @@ const form = useForm({
 
 const submit = () => {
   form.post(route('promotions.store'), {
+    preserveScroll: false,
     onSuccess: () => {
       // Redirect will be handled by the controller
+    },
+    onFinish: () => {
+      form.processing = false
     }
   })
 }

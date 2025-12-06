@@ -165,7 +165,14 @@ class SaleController extends Controller
      */
     public function show(Sale $sale)
     {
-        $sale->load(['cashier', 'customer', 'saleItems.product.category', 'promotion']);
+        $sale->load([
+            'cashier', 
+            'customer', 
+            'saleItems.product.category', 
+            'promotion',
+            'refunds.refundItems.product',
+            'refunds.refundItems.saleItem.product'
+        ]);
 
         return Inertia::render('Sales/Show', [
             'sale' => $sale,
@@ -265,6 +272,10 @@ class SaleController extends Controller
                 'change_amount' => $request->change_amount ?? 0,
                 'notes' => $request->notes,
                 'promotion_id' => $request->promotion_id,
+                'invoice_type' => $request->invoice_type ?? 'cash_bill',
+                'tax_invoice_customer' => $request->invoice_type === 'tax_invoice' 
+                    ? $request->tax_invoice_customer 
+                    : null,
             ]);
 
             // Create new sale items and update product stock

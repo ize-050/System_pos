@@ -14,7 +14,8 @@ class CustomerController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'verified']);
-        $this->middleware('role:admin,manager')->except(['index', 'show']);
+        // Allow admin, manager, cashier to manage customers
+        $this->middleware('role:admin,manager,cashier');
     }
 
     /**
@@ -184,9 +185,12 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
-        // Check if customer has any sales
+        // Soft delete - just mark as inactive instead of hard delete
+        // This preserves sales history
         if ($customer->sales()->count() > 0) {
-            return back()->with('error', 'ไม่สามารถลบลูกค้าที่มีประวัติการซื้อได้');
+            $customer->update(['is_active' => false]);
+            return redirect()->route('customers.index')
+                ->with('success', 'ลูกค้าถูกปิดการใช้งานเรียบร้อยแล้ว (มีประวัติการซื้อ)');
         }
 
         $customer->delete();

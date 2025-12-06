@@ -63,6 +63,7 @@
                       id="barcode"
                       v-model="form.barcode"
                       type="text"
+                      @keydown.enter.prevent
                       class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-l-md shadow-sm focus:outline-none"
                       style="border-color: #E2E8F0;"
                       onfocus="this.style.borderColor='#6B7B47'; this.style.boxShadow='0 0 0 3px rgba(107, 123, 71, 0.2)'"
@@ -432,7 +433,6 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
 import { useForm, usePage } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
-import toastStore from '@/Stores/toastStore'
 
 const page = usePage()
 
@@ -545,23 +545,16 @@ export default {
       }))
       .post(route('products.update', props.product.id), {
         forceFormData: true,
-        onSuccess: () => {
-          toastStore.crud.updated('สินค้า')
-        },
-        onError: () => {
-          toastStore.crud.updateError('สินค้า')
+        preserveScroll: false,
+        onFinish: () => {
+          // Always reset processing state
+          setTimeout(() => {
+            form.processing = false
+          }, 100)
         }
       })
     }
 
-    // Show flash messages
-    if (page.props.flash?.success) {
-      toastStore.success(page.props.flash.success)
-    }
-
-    if (page.props.flash?.error) {
-      toastStore.error(page.props.flash.error)
-    }
 
     return {
       form,

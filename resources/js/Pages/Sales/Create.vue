@@ -440,8 +440,12 @@ const submit = () => {
     }
     
     form.post(route('sales.store'), {
+        preserveScroll: false,
         onSuccess: () => {
             // Handle success if needed
+        },
+        onFinish: () => {
+            form.processing = false
         }
     })
 }

@@ -112,6 +112,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('debtors.index');
 
+    // Refund Routes (คืนสินค้า)
+    Route::middleware(['role:admin,manager,cashier'])->group(function () {
+        Route::get('/refunds', [App\Http\Controllers\RefundController::class, 'index'])->name('refunds.index');
+        Route::get('/refunds/create', [App\Http\Controllers\RefundController::class, 'create'])->name('refunds.create');
+        Route::get('/refunds/search-sale', [App\Http\Controllers\RefundController::class, 'searchSale'])->name('refunds.search-sale');
+        Route::post('/refunds', [App\Http\Controllers\RefundController::class, 'store'])->name('refunds.store');
+        Route::get('/refunds/{refund}', [App\Http\Controllers\RefundController::class, 'show'])->name('refunds.show');
+        Route::post('/refunds/{refund}/approve', [App\Http\Controllers\RefundController::class, 'approve'])->name('refunds.approve');
+        Route::post('/refunds/{refund}/complete', [App\Http\Controllers\RefundController::class, 'complete'])->name('refunds.complete');
+        Route::post('/refunds/{refund}/reject', [App\Http\Controllers\RefundController::class, 'reject'])->name('refunds.reject');
+        Route::get('/refunds/{refund}/print', [App\Http\Controllers\RefundController::class, 'print'])->name('refunds.print');
+    });
+
     // POS System Routes
     Route::middleware(['role:admin,manager,cashier'])->group(function () {
         Route::get('/pos', [POSController::class, 'index'])->name('pos.index');

@@ -145,6 +145,9 @@ const submit = () => {
         draggable: true,
       })
     },
+    onFinish: () => {
+      form.processing = false
+    },
   })
 }
 </script>

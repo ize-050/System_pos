@@ -8,8 +8,14 @@
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <!-- Print Header (only visible when printing) -->
+        <div class="print-header hidden print:block mb-6 text-center">
+          <h1 class="text-2xl font-bold">รายงานยอดขาย-ซื้อรายวัน</h1>
+          <p class="text-gray-600">วันที่: {{ formatDate(filters.date) }}</p>
+        </div>
+
         <!-- Filters -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 no-print">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
@@ -274,15 +280,72 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style>
 @media print {
-  .no-print {
+  /* Hide navigation, sidebar, header */
+  nav,
+  aside,
+  header,
+  .no-print,
+  [class*="sidebar"],
+  [class*="navigation"],
+  button,
+  select,
+  input {
     display: none !important;
   }
   
+  /* Reset layout */
   body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Make main content full width */
+  main,
+  .py-12,
+  .max-w-7xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Show tables properly */
+  table {
+    width: 100%;
+    font-size: 10px;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 4px 6px;
+  }
+  
+  /* Keep colors */
+  .text-red-600 { color: #dc2626 !important; }
+  .text-green-600 { color: #16a34a !important; }
+  .text-blue-600 { color: #2563eb !important; }
+  .bg-gray-100 { background-color: #f3f4f6 !important; }
+  .bg-gray-50 { background-color: #f9fafb !important; }
+  
+  /* Page settings */
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+  
+  /* Show print header */
+  .print-header {
+    display: block !important;
+  }
+  
+  /* Hide no-print elements */
+  .no-print {
+    display: none !important;
   }
 }
 </style>

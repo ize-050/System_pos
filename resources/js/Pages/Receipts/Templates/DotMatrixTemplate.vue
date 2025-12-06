@@ -37,18 +37,44 @@
     <!-- Customer Info Row -->
     <div class="customer-row">
       <table class="customer-table">
-        <tr>
-          <td class="cust-label">CUSTOMER NAME</td>
-          <td class="cust-value" colspan="3">{{ sale.customer?.company_name || sale.customer?.name || 'ลูกค้าทั่วไป' }}</td>
-        </tr>
-        <tr>
-          <td class="cust-label">ที่อยู่</td>
-          <td class="cust-value" colspan="3">{{ sale.customer?.address || '-' }}</td>
-        </tr>
-        <tr v-if="sale.customer?.tax_id">
-          <td class="cust-label">เลขประจำตัวผู้เสียภาษี</td>
-          <td class="cust-value" colspan="3">{{ sale.customer.tax_id }}</td>
-        </tr>
+        <!-- Tax Invoice Customer Info -->
+        <template v-if="sale.invoice_type === 'tax_invoice' && sale.tax_invoice_customer">
+          <tr>
+            <td class="cust-label">CUSTOMER NAME</td>
+            <td class="cust-value" colspan="3">{{ sale.tax_invoice_customer.company_name || '-' }}</td>
+          </tr>
+          <tr>
+            <td class="cust-label">ที่อยู่</td>
+            <td class="cust-value" colspan="3">{{ sale.tax_invoice_customer.address || '-' }}</td>
+          </tr>
+          <tr v-if="sale.tax_invoice_customer.tax_id">
+            <td class="cust-label">เลขประจำตัวผู้เสียภาษี</td>
+            <td class="cust-value" colspan="3">{{ sale.tax_invoice_customer.tax_id }}</td>
+          </tr>
+          <tr v-if="sale.tax_invoice_customer.phone">
+            <td class="cust-label">โทรศัพท์</td>
+            <td class="cust-value" colspan="3">{{ sale.tax_invoice_customer.phone }}</td>
+          </tr>
+          <tr v-if="sale.tax_invoice_customer.branch">
+            <td class="cust-label">สาขา</td>
+            <td class="cust-value" colspan="3">{{ sale.tax_invoice_customer.branch }}</td>
+          </tr>
+        </template>
+        <!-- Regular Customer Info -->
+        <template v-else>
+          <tr>
+            <td class="cust-label">CUSTOMER NAME</td>
+            <td class="cust-value" colspan="3">{{ sale.customer?.company_name || sale.customer?.name || 'ลูกค้าทั่วไป' }}</td>
+          </tr>
+          <tr>
+            <td class="cust-label">ที่อยู่</td>
+            <td class="cust-value" colspan="3">{{ sale.customer?.address || '-' }}</td>
+          </tr>
+          <tr v-if="sale.customer?.tax_id">
+            <td class="cust-label">เลขประจำตัวผู้เสียภาษี</td>
+            <td class="cust-value" colspan="3">{{ sale.customer.tax_id }}</td>
+          </tr>
+        </template>
       </table>
     </div>
 
@@ -60,9 +86,8 @@
           <th class="col-article">ARTICLE<br>NUMBER</th>
           <th class="col-desc">ARTICLE DESCRIPTION<br>รายการสินค้า</th>
           <th class="col-unit">UNIT<br>หน่วย</th>
-          <th class="col-price">PACK<br>PRICE</th>
-          <th class="col-vat">VAT</th>
-          <th class="col-amount">VALUE INCLUDED<br>VAT (BAHT)</th>
+          <th class="col-price">UNIT PRICE<br>ราคา/หน่วย</th>
+          <th class="col-amount">AMOUNT<br>จำนวนเงิน</th>
         </tr>
       </thead>
       <tbody>
@@ -72,12 +97,10 @@
           <td>{{ item.product?.name || '-' }}</td>
           <td class="text-center">{{ item.product?.unit || 'ชิ้น' }}</td>
           <td class="text-right">{{ formatNumber(item.unit_price) }}</td>
-          <td class="text-center">7%</td>
           <td class="text-right">{{ formatNumber(item.total_price) }}</td>
         </tr>
         <!-- Empty rows -->
         <tr v-for="n in Math.max(0, 8 - (sale.sale_items?.length || 0))" :key="'empty-' + n" class="item-row empty-row">
-          <td>&nbsp;</td>
           <td>&nbsp;</td>
           <td>&nbsp;</td>
           <td>&nbsp;</td>
@@ -94,46 +117,61 @@
         <div class="amount-words">({{ convertToThaiWords(sale.total_amount) }})</div>
       </div>
       <div class="summary-right">
-        <table class="summary-table">
+        <table class="summary-table-new">
           <tr>
-            <td class="sum-label">จำนวน รายการ / QTY</td>
-            <td class="sum-label">ราคาสินค้า / LEGAL AMOUNT</td>
-            <td class="sum-label">ภาษี / VAT</td>
-            <td class="sum-label">รวม / TOTAL</td>
-            <td class="sum-label">รวมเงิน / BAHT</td>
+            <td class="sum-desc" rowspan="4">
+              <div class="payment-info">
+                <strong>การชำระเงิน:</strong> {{ formatPaymentMethodThai(sale.payment_method) }}
+              </div>
+            </td>
+            <td class="sum-label-right">รวมราคาสินค้า</td>
+            <td class="sum-value-right">{{ formatNumber(sale.subtotal || 0) }}</td>
+          </tr>  
+          <tr v-if="hasVat">
+            <td class="sum-label-right">ภาษีมูลค่าเพิ่ม VAT 7%</td>
+            <td class="sum-value-right">{{ formatNumber(sale.tax_amount || 0) }}</td>
           </tr>
-          <tr>
-            <td class="sum-value">{{ getTotalQuantity() }}</td>
-            <td class="sum-value">{{ formatNumber(getSubtotalBeforeVat()) }}</td>
-            <td class="sum-value">{{ formatNumber(sale.vat_amount || 0) }}</td>
-            <td class="sum-value">{{ formatNumber(sale.total_amount) }}</td>
-            <td class="sum-value">{{ formatNumber(sale.total_amount) }}</td>
+          <tr v-if="sale.discount_amount > 0"> 
+            <td class="sum-label-right">ส่วนลด</td>
+            <td class="sum-value-right">-{{ formatNumber(sale.discount_amount) }}</td>
           </tr>
-          <tr>
-            <td class="sum-label">TOTAL</td>
-            <td class="sum-value">{{ formatNumber(getSubtotalBeforeVat()) }}</td>
-            <td class="sum-value">{{ formatNumber(sale.vat_amount || 0) }}</td>
-            <td class="sum-value">{{ formatNumber(sale.total_amount) }}</td>
-            <td class="sum-label">{{ formatPaymentMethod(sale.payment_method) }}</td>
+          <tr v-if="sale.shipping_fee > 0">
+            <td class="sum-label-right">ค่าจัดส่ง</td>
+            <td class="sum-value-right">{{ formatNumber(sale.shipping_fee) }}</td>
           </tr>
-          <tr v-if="sale.discount_amount > 0">
-            <td class="sum-label">ส่วนลด</td>
-            <td colspan="4" class="sum-value">{{ formatNumber(sale.discount_amount) }}</td>
-          </tr>
-          <tr>
-            <td class="sum-label">รับเงิน</td>
-            <td class="sum-value" colspan="2">{{ formatNumber(sale.paid_amount) }}</td>
-            <td class="sum-label">เงินทอน</td>
-            <td class="sum-value">{{ formatNumber(sale.change_amount) }}</td>
+          <tr class="total-row">
+            <td class="sum-label-right total-label">รวมทั้งสิ้น (TOTAL)</td>
+            <td class="sum-value-right total-value">{{ formatNumber(sale.total_amount) }}</td>
           </tr>
         </table>
       </div>
     </div>
 
-    <!-- Footer -->
-    <div class="footer-section">
-      <div class="form-number">FORM BA003 VAT</div>
+    <!-- Signature Section -->
+    <div class="signature-section">
+      <table class="signature-table">
+        <tr>
+          <td class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">ผู้รับสินค้า / Received by</div>
+            <div class="signature-date">วันที่ / Date _______________</div>
+          </td>
+          <td class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">ผู้ส่งสินค้า / Delivered by</div>
+            <div class="signature-date">วันที่ / Date _______________</div>
+          </td>
+          <td class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-label">ผู้อนุมัติ / Approved by</div>
+            <div class="signature-date">วันที่ / Date _______________</div>
+          </td>
+        </tr>
+      </table>
     </div>
+
+    <!-- Footer -->
+    
   </div>
 </template>
 
@@ -151,15 +189,20 @@ const props = defineProps({
   }
 })
 
+// Check if VAT is included
+const hasVat = computed(() => {
+  return props.sale.tax_amount && parseFloat(props.sale.tax_amount) > 0
+})
+
 // Receipt style for Dot Matrix (9.5" x 11" = 241mm x 279mm)
 // ปรับให้พอดีกระดาษ A4 หรือ 9.5" x 11"
 const receiptStyle = computed(() => ({
   width: '210mm',  // A4 width หรือปรับเป็น 241mm สำหรับ 9.5"
   minHeight: '270mm',
   padding: '5mm 8mm',
-  fontFamily: '"Courier New", Courier, monospace',
+  fontFamily: 'Tahoma, "Leelawadee UI", "Sarabun", sans-serif',
   fontSize: '10pt',
-  lineHeight: '1.3',
+  lineHeight: '1.4',
   backgroundColor: 'white',
   color: 'black'
 }))
@@ -202,6 +245,16 @@ const formatPaymentMethod = (method) => {
   return methods[method] || method || '-'
 }
 
+const formatPaymentMethodThai = (method) => {
+  const methods = {
+    'cash': 'เงินสด',
+    'transfer': 'โอนเงิน',
+    'credit_card': 'บัตรเครดิต',
+    'credit': 'บัตรเครดิต'
+  }
+  return methods[method] || method || '-'
+}
+
 const getTotalQuantity = () => {
   if (!props.sale.sale_items) return 0
   return props.sale.sale_items.reduce((sum, item) => sum + (item.quantity || 0), 0)
@@ -209,7 +262,7 @@ const getTotalQuantity = () => {
 
 const getSubtotalBeforeVat = () => {
   const total = props.sale.total_amount || 0
-  const vat = props.sale.vat_amount || 0
+  const vat = props.sale.tax_amount || 0
   return total - vat
 }
 
@@ -413,13 +466,12 @@ const convertSatang = (satang) => {
   height: 6mm;
 }
 
-.col-qty { width: 8%; }
-.col-article { width: 12%; }
-.col-desc { width: 35%; }
-.col-unit { width: 8%; }
-.col-price { width: 12%; }
-.col-vat { width: 8%; }
-.col-amount { width: 17%; }
+.col-qty { width: 10%; }
+.col-article { width: 14%; }
+.col-desc { width: 36%; }
+.col-unit { width: 10%; }
+.col-price { width: 15%; }
+.col-amount { width: 15%; }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
@@ -445,25 +497,100 @@ const convertSatang = (satang) => {
   flex: 2;
 }
 
-.summary-table {
+.summary-table-new {
   width: 100%;
   border-collapse: collapse;
-  font-size: 7pt;
+  font-size: 8pt;
 }
 
-.summary-table td {
+.summary-table-new td {
   border: 1px solid #333;
-  padding: 1.5mm;
+  padding: 2mm;
 }
 
-.sum-label {
-  background: #f5f5f5;
-  font-weight: bold;
-  text-align: center;
+.sum-desc {
+  width: 40%;
+  vertical-align: middle;
+  padding: 3mm;
 }
 
-.sum-value {
+.payment-info {
+  font-size: 9pt;
+}
+
+.sum-label-right {
+  width: 35%;
+  text-align: left;
+  padding-left: 3mm;
+  background: #f8f8f8;
+}
+
+.sum-value-right {
+  width: 25%;
   text-align: right;
+  padding-right: 3mm;
+  font-weight: bold;
+}
+
+.sum-desc-total {
+  background: #e0e0e0;
+}
+
+.sum-label-total {
+  background: #e0e0e0;
+  font-size: 10pt;
+  font-weight: bold;
+  text-align: left;
+  padding-left: 3mm;
+}
+
+.sum-value-total {
+  background: #e0e0e0;
+  font-size: 11pt;
+  font-weight: bold;
+  text-align: right;
+  padding-right: 3mm;
+}
+
+.total-row td {
+  background: #e0e0e0;
+}
+
+/* Signature Section */
+.signature-section {
+  padding: 5mm 3mm;
+  border-top: 1px solid #333;
+  margin-top: 5mm;
+}
+
+.signature-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.signature-box {
+  width: 33.33%;
+  text-align: center;
+  padding: 3mm 5mm;
+  vertical-align: bottom;
+}
+
+.signature-line {
+  border-bottom: 1px solid #333;
+  height: 20mm;
+  margin-bottom: 2mm;
+}
+
+.signature-label {
+  font-size: 8pt;
+  font-weight: bold;
+  margin-top: 2mm;
+}
+
+.signature-date {
+  font-size: 7pt;
+  margin-top: 3mm;
+  color: #666;
 }
 
 /* Footer Section */

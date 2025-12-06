@@ -15,6 +15,7 @@ class Sale extends Model
         'cashier_id',
         'subtotal',
         'discount_amount',
+        'shipping_fee',
         'tax_amount',
         'total_amount',
         'payment_method',
@@ -23,19 +24,23 @@ class Sale extends Model
         'status',
         'sale_date',
         'promotion_id',
-        'notes'
+        'notes',
+        'invoice_type',
+        'tax_invoice_customer'
     ];
 
     protected $casts = [
         'subtotal' => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'shipping_fee' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'received_amount' => 'decimal:2',
         'change_amount' => 'decimal:2',
         'sale_date' => 'datetime',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
+        'tax_invoice_customer' => 'array'
     ];
 
     // Relationships
@@ -59,6 +64,11 @@ class Sale extends Model
         return $this->belongsTo(Promotion::class);
     }
 
+    public function refunds()
+    {
+        return $this->hasMany(Refund::class);
+    }
+
     // Scopes
     public function scopeByStatus($query, $status)
     {
@@ -77,8 +87,9 @@ class Sale extends Model
 
     public function scopeThisMonth($query)
     {
-        return $query->whereMonth('sale_date', now()->month)
-                    ->whereYear('sale_date', now()->year);
+        return $query
+            ->whereMonth('sale_date', now()->month)
+            ->whereYear('sale_date', now()->year);
     }
 
     // Accessors

@@ -148,6 +148,11 @@ const formatCurrency = (amount) => {
 };
 
 const submit = () => {
-  form.post(route('purchase-orders.store'));
+  form.post(route('purchase-orders.store'), {
+    preserveScroll: false,
+    onFinish: () => {
+      form.processing = false
+    }
+  });
 };
 </script>

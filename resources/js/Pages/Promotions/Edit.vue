@@ -389,8 +389,12 @@ const form = useForm({
 
 const submit = () => {
   form.put(route('promotions.update', props.promotion.id), {
+    preserveScroll: false,
     onSuccess: () => {
       // Redirect will be handled by the controller
+    },
+    onFinish: () => {
+      form.processing = false
     }
   })
 }

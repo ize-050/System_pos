@@ -240,6 +240,11 @@ const formatNumber = (num) => {
 }
 
 const submit = () => {
-  form.post(route('stock-requisitions.store'))
+  form.post(route('stock-requisitions.store'), {
+    preserveScroll: false,
+    onFinish: () => {
+      form.processing = false
+    }
+  })
 }
 </script>

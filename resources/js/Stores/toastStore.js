@@ -3,16 +3,15 @@ import 'vue3-toastify/dist/index.css'
 
 // Default toast configuration
 const defaultConfig = {
-  position: 'top-center',
+  position: 'top-right',
   autoClose: 3000,
   hideProgressBar: false,
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,
-  theme: 'light',
+  theme: 'colored',
   style: {
-    zIndex: 9999,
-    marginTop: '60px'
+    zIndex: 99999
   }
 }
 

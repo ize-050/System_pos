@@ -135,8 +135,13 @@ class PromotionController extends Controller
         $promotionData['minimum_amount'] = $promotion->min_amount;
         $promotionData['maximum_discount'] = $promotion->max_discount;
 
+        $products = Product::select('id', 'name')->get();
+        $categories = ProductCategory::select('id', 'name')->get();
+
         return Inertia::render('Promotions/Show', [
-            'promotion' => $promotionData
+            'promotion' => $promotionData,
+            'products' => $products,
+            'categories' => $categories
         ]);
     }
 

@@ -70,16 +70,21 @@
                         </div>
                     </div>
 
-                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg shadow-lg">
+                    <div :class="[
+                        'text-white p-6 rounded-lg shadow-lg',
+                        (analytics?.gross_profit || 0) >= 0 
+                            ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                            : 'bg-gradient-to-r from-red-500 to-red-600'
+                    ]">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-green-100 text-sm">กำไรขั้นต้น</p>
+                                <p :class="(analytics?.gross_profit || 0) >= 0 ? 'text-green-100' : 'text-red-100'" class="text-sm">กำไรขั้นต้น</p>
                                 <p class="text-2xl font-bold">{{ formatCurrency(analytics?.gross_profit || 0) }}</p>
-                                <p class="text-green-100 text-xs mt-1">
+                                <p :class="(analytics?.gross_profit || 0) >= 0 ? 'text-green-100' : 'text-red-100'" class="text-xs mt-1">
                                     Margin: {{ analytics?.profit_margin || 0 }}%
                                 </p>
                             </div>
-                            <div class="text-3xl">📈</div>
+                            <div class="text-3xl">{{ (analytics?.gross_profit || 0) >= 0 ? '📈' : '📉' }}</div>
                         </div>
                     </div>
 
