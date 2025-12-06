@@ -802,6 +802,26 @@
                                 </h3>
 
                                 <div class="space-y-3">
+                                    <!-- Mark as Paid Button (for credit sales) -->
+                                    <button
+                                        v-if="sale.payment_method === 'credit' && sale.status !== 'paid'"
+                                        @click="markAsPaid()"
+                                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded flex items-center justify-center"
+                                    >
+                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        รับชำระแล้ว
+                                    </button>
+
+                                    <!-- Already Paid Badge -->
+                                    <div
+                                        v-if="sale.payment_method === 'credit' && sale.status === 'paid'"
+                                        class="w-full bg-green-100 text-green-800 font-bold py-3 px-4 rounded text-center"
+                                    >
+                                        ✓ ชำระเงินแล้ว
+                                    </div>
+
                                     <Link
                                         :href="route('sales.receipt', sale.id)"
                                         class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-center block transition ease-in-out duration-150"
@@ -1019,6 +1039,24 @@ const deleteSale = () => {
         router.delete(route("sales.destroy", props.sale.id), {
             onSuccess: () => {
                 router.visit(route("sales.index"));
+            },
+        });
+    }
+};
+
+// Mark credit sale as paid
+const markAsPaid = () => {
+    if (
+        confirm(
+            "ยืนยันว่าลูกค้าชำระเงินแล้ว? ยอดค้างชำระของลูกค้าจะถูกหักออก"
+        )
+    ) {
+        router.post(route("sales.mark-paid", props.sale.id), {}, {
+            onSuccess: () => {
+                alert("บันทึกการชำระเงินเรียบร้อยแล้ว");
+            },
+            onError: (errors) => {
+                alert("เกิดข้อผิดพลาด: " + Object.values(errors).join(", "));
             },
         });
     }

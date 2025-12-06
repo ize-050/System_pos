@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
-use App\Models\Product;
-use App\Models\SaleItem;
 use App\Http\Requests\StoreSaleRequest;
 use App\Http\Requests\UpdateSaleRequest;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class SaleController extends Controller
 {
@@ -26,12 +26,13 @@ class SaleController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('sale_number', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%")
-                  ->orWhere('customer_phone', 'like', "%{$search}%")
-                  ->orWhereHas('cashier', function ($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', "%{$search}%");
-                  });
+                $q
+                    ->where('sale_number', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%")
+                    ->orWhereHas('cashier', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -130,7 +131,7 @@ class SaleController extends Controller
             // Create sale items and update product stock
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                
+
                 // Check stock availability
                 if ($product->stock_quantity < $item['quantity']) {
                     throw new \Exception("Insufficient stock for product: {$product->name}");
@@ -151,9 +152,9 @@ class SaleController extends Controller
 
             DB::commit();
 
-            return redirect()->route('sales.show', $sale->id)
+            return redirect()
+                ->route('sales.show', $sale->id)
                 ->with('success', 'Sale completed successfully!');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => $e->getMessage()]);
@@ -166,9 +167,9 @@ class SaleController extends Controller
     public function show(Sale $sale)
     {
         $sale->load([
-            'cashier', 
-            'customer', 
-            'saleItems.product.category', 
+            'cashier',
+            'customer',
+            'saleItems.product.category',
             'promotion',
             'refunds.refundItems.product',
             'refunds.refundItems.saleItem.product'
@@ -186,7 +187,8 @@ class SaleController extends Controller
     {
         // Only admin can edit completed sales
         if ($sale->status === 'completed' && Auth::user()->role !== 'admin') {
-            return redirect()->route('sales.show', $sale->id)
+            return redirect()
+                ->route('sales.show', $sale->id)
                 ->with('error', 'เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถแก้ไขรายการขายที่เสร็จสมบูรณ์ได้');
         }
 
@@ -273,15 +275,15 @@ class SaleController extends Controller
                 'notes' => $request->notes,
                 'promotion_id' => $request->promotion_id,
                 'invoice_type' => $request->invoice_type ?? 'cash_bill',
-                'tax_invoice_customer' => $request->invoice_type === 'tax_invoice' 
-                    ? $request->tax_invoice_customer 
+                'tax_invoice_customer' => $request->invoice_type === 'tax_invoice'
+                    ? $request->tax_invoice_customer
                     : null,
             ]);
 
             // Create new sale items and update product stock
             foreach ($request->items as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                
+
                 // Check stock availability
                 if ($product->current_stock < $item['quantity']) {
                     throw new \Exception("สต็อกไม่เพียงพอสำหรับสินค้า: {$product->name}");
@@ -307,7 +309,7 @@ class SaleController extends Controller
                     // Check credit limit
                     $availableCredit = $customer->credit_limit - $customer->outstanding_balance;
                     if ($availableCredit < $request->total_amount) {
-                        throw new \Exception("วงเงินเครดิตไม่เพียงพอ มีวงเงินคงเหลือ: ฿" . number_format($availableCredit, 2));
+                        throw new \Exception('วงเงินเครดิตไม่เพียงพอ มีวงเงินคงเหลือ: ฿' . number_format($availableCredit, 2));
                     }
                     $customer->increment('outstanding_balance', $request->total_amount);
                 }
@@ -315,9 +317,9 @@ class SaleController extends Controller
 
             DB::commit();
 
-            return redirect()->route('sales.show', $sale->id)
+            return redirect()
+                ->route('sales.show', $sale->id)
                 ->with('success', 'แก้ไขรายการขายสำเร็จ! สต็อกสินค้าได้รับการปรับปรุงแล้ว');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
@@ -356,15 +358,15 @@ class SaleController extends Controller
 
             // Delete sale items first
             $sale->saleItems()->delete();
-            
+
             // Delete sale
             $sale->delete();
 
             DB::commit();
 
-            return redirect()->route('sales.index')
+            return redirect()
+                ->route('sales.index')
                 ->with('success', 'ลบรายการขายสำเร็จ! สต็อกสินค้าได้รับการคืนแล้ว');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
@@ -383,12 +385,13 @@ class SaleController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%")
-                  ->orWhereHas('category', function ($categoryQuery) use ($search) {
-                      $categoryQuery->where('name', 'like', "%{$search}%");
-                  });
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -410,5 +413,43 @@ class SaleController extends Controller
             'sale' => $sale,
             'settings' => $settings,
         ]);
+    }
+
+    /**
+     * Mark credit sale as paid
+     */
+    public function markAsPaid(Sale $sale)
+    {
+        // Only for credit sales
+        if ($sale->payment_method !== 'credit') {
+            return back()->with('error', 'ใบสั่งซื้อนี้ไม่ใช่การชำระแบบเครดิต');
+        }
+
+        // Already paid
+        if ($sale->status === 'paid') {
+            return back()->with('error', 'ใบสั่งซื้อนี้ชำระเงินแล้ว');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Update sale status to paid
+            $sale->status = 'paid';
+            $sale->save();
+
+            // Decrease customer's current_balance (outstanding amount)
+            if ($sale->customer_id) {
+                $customer = $sale->customer;
+                if ($customer) {
+                    $customer->decrement('current_balance', $sale->total_amount);
+                }
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'บันทึกการชำระเงินเรียบร้อยแล้ว');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
+        }
     }
 }

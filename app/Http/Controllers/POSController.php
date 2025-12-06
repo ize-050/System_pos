@@ -171,9 +171,9 @@ class POSController extends Controller
                     'company_name' => $customer->company_name,
                     'customer_code' => $customer->customer_code,
                     'customer_type' => $customer->customer_type,
-                    'credit_limit' => $customer->credit_limit,
-                    'outstanding_balance' => $customer->outstanding_balance,
-                    'available_credit' => max(0, $customer->credit_limit - $customer->outstanding_balance)
+                    'credit_limit' => (float) ($customer->credit_limit ?? 0),
+                    'current_balance' => (float) ($customer->current_balance ?? 0),
+                    'available_credit' => (float) max(0, ($customer->credit_limit ?? 0) - ($customer->current_balance ?? 0))
                 ];
             });
 
@@ -187,7 +187,7 @@ class POSController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,transfer,credit_card,customer_account',
+            'payment_method' => 'required|in:cash,transfer,card,credit',
             'customer_id' => 'nullable|exists:customers,id',
             'received_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
@@ -272,17 +272,18 @@ class POSController extends Controller
                 $promotion->increment('used_count');
             }
 
-            // Update customer outstanding balance if credit sale
-            if ($request->payment_method === 'customer_account' && $request->customer_id) {
+            // Update customer credit balance if credit sale
+            if ($request->payment_method === 'credit' && $request->customer_id) {
                 $customer = Customer::findOrFail($request->customer_id);
 
                 // Check if customer has sufficient credit limit
-                $availableCredit = $customer->credit_limit - $customer->outstanding_balance;
+                $availableCredit = ($customer->credit_limit ?? 0) - ($customer->current_balance ?? 0);
                 if ($availableCredit < $totalAmount) {
-                    throw new \Exception('Insufficient credit limit. Available: ฿' . number_format($availableCredit, 2) . ', Required: ฿' . number_format($totalAmount, 2));
+                    throw new \Exception('วงเงินเครดิตไม่เพียงพอ คงเหลือ: ฿' . number_format($availableCredit, 2) . ', ต้องการ: ฿' . number_format($totalAmount, 2));
                 }
 
-                $customer->increment('outstanding_balance', $totalAmount);
+                // Increment current_balance (outstanding amount)
+                $customer->increment('current_balance', $totalAmount);
             }
 
             DB::commit();

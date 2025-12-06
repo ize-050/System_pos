@@ -100,6 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['role:admin,manager,cashier'])->group(function () {
         Route::get('/sales/search-products', [SaleController::class, 'searchProducts'])->name('sales.search-products');
         Route::get('/sales/{sale}/receipt', [SaleController::class, 'printReceipt'])->name('sales.receipt');
+        Route::post('/sales/{sale}/mark-paid', [SaleController::class, 'markAsPaid'])->name('sales.mark-paid');
         Route::resource('sales', SaleController::class);
     });
 

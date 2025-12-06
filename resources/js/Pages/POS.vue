@@ -436,47 +436,102 @@
                                         :key="item.id"
                                         class="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-indigo-300 transition-all"
                                     >
-                                        <div class="flex justify-between items-start mb-2">
+                                        <div
+                                            class="flex justify-between items-start mb-2"
+                                        >
                                             <div class="flex-1 pr-2">
-                                                <h4 class="font-bold text-gray-900 text-sm leading-tight">
+                                                <h4
+                                                    class="font-bold text-gray-900 text-sm leading-tight"
+                                                >
                                                     {{ item.product_name }}
                                                 </h4>
-                                                <p class="text-xs text-gray-500">
-                                                    ฿{{ formatPrice(item.price) }} / หน่วย
+                                                <p
+                                                    class="text-xs text-gray-500"
+                                                >
+                                                    ฿{{
+                                                        formatPrice(item.price)
+                                                    }}
+                                                    / หน่วย
                                                 </p>
                                             </div>
                                             <div class="text-right">
-                                                <span class="text-lg font-bold text-gray-900">
-                                                    ฿{{ formatPrice(item.price * item.quantity) }}
+                                                <span
+                                                    class="text-lg font-bold text-gray-900"
+                                                >
+                                                    ฿{{
+                                                        formatPrice(
+                                                            item.price *
+                                                                item.quantity
+                                                        )
+                                                    }}
                                                 </span>
                                             </div>
                                         </div>
                                         <!-- Quantity Controls -->
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center space-x-2">
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <div
+                                                class="flex items-center space-x-2"
+                                            >
                                                 <button
-                                                    @click="updateCartQuantity({ id: item.id, change: -1 })"
+                                                    @click="
+                                                        updateCartQuantity({
+                                                            id: item.id,
+                                                            change: -1,
+                                                        })
+                                                    "
                                                     class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
                                                 >
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                                    <svg
+                                                        class="w-4 h-4"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M20 12H4"
+                                                        ></path>
                                                     </svg>
                                                 </button>
                                                 <input
                                                     type="number"
                                                     :value="item.quantity"
-                                                    @change="setCartQuantity(item.id, $event.target.value)"
+                                                    @change="
+                                                        setCartQuantity(
+                                                            item.id,
+                                                            $event.target.value
+                                                        )
+                                                    "
                                                     @keydown.enter.prevent
                                                     min="1"
                                                     :max="item.max_stock"
                                                     class="w-14 text-center border border-gray-300 rounded py-1 text-sm"
                                                 />
                                                 <button
-                                                    @click="updateCartQuantity({ id: item.id, change: 1 })"
+                                                    @click="
+                                                        updateCartQuantity({
+                                                            id: item.id,
+                                                            change: 1,
+                                                        })
+                                                    "
                                                     class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
                                                 >
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                                    <svg
+                                                        class="w-4 h-4"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                                        ></path>
                                                     </svg>
                                                 </button>
                                             </div>
@@ -484,8 +539,18 @@
                                                 @click="removeFromCart(item.id)"
                                                 class="w-7 h-7 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600"
                                             >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                <svg
+                                                    class="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                    ></path>
                                                 </svg>
                                             </button>
                                         </div>
@@ -654,7 +719,9 @@
                                         >
                                     </div>
                                     <!-- Shipping Fee -->
-                                    <div class="flex justify-between items-center text-sm">
+                                    <div
+                                        class="flex justify-between items-center text-sm"
+                                    >
                                         <span>ค่าจัดส่ง:</span>
                                         <div class="flex items-center">
                                             <span class="mr-1">฿</span>
@@ -698,7 +765,7 @@
                                     class="block text-xs font-semibold text-gray-700 mb-2"
                                     >วิธีชำระเงิน</label
                                 >
-                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                <div class="grid grid-cols-3 gap-2 mb-2">
                                     <button
                                         @click="paymentMethod = 'cash'"
                                         :class="
@@ -720,6 +787,20 @@
                                         class="py-2 rounded-lg font-semibold text-sm hover:opacity-90 transition-all"
                                     >
                                         โอนเงิน
+                                    </button>
+                                    <button
+                                        @click="paymentMethod = 'credit'"
+                                        :disabled="!selectedMainCustomer"
+                                        :class="
+                                            paymentMethod === 'credit'
+                                                ? 'bg-purple-500 text-white'
+                                                : selectedMainCustomer 
+                                                    ? 'bg-purple-100 text-purple-700'
+                                                    : 'bg-gray-100 text-gray-400'
+                                        "
+                                        class="py-2 rounded-lg font-semibold text-sm hover:opacity-90 transition-all"
+                                    >
+                                        เครดิต
                                     </button>
                                 </div>
 
@@ -761,6 +842,23 @@
                                     class="text-xs text-gray-600 mt-2"
                                 >
                                     ชำระผ่านการโอนเงิน
+                                </div>
+
+                                <!-- Credit Note -->
+                                <div
+                                    v-if="paymentMethod === 'credit'"
+                                    class="mt-2 p-2 bg-purple-50 rounded-lg border border-purple-200"
+                                >
+                                    <div class="text-xs text-purple-700 font-medium">
+                                        💳 ชำระด้วยเครดิต (ค้างชำระ)
+                                    </div>
+                                    <div v-if="selectedMainCustomer" class="text-xs text-purple-600 mt-1">
+                                        วงเงิน: ฿{{ formatPrice(selectedMainCustomer.credit_limit || 0) }} | 
+                                        ค้างชำระ: ฿{{ formatPrice(selectedMainCustomer.current_balance || 0) }}
+                                    </div>
+                                    <div v-if="!selectedMainCustomer" class="text-xs text-red-500 mt-1">
+                                        ⚠️ กรุณาเลือกลูกค้าก่อน
+                                    </div>
                                 </div>
                             </div>
 
@@ -876,14 +974,79 @@
                                                             selectedMainCustomer.phone
                                                         }}
                                                     </div>
+                                                    <!-- Credit Info -->
                                                     <div
-                                                        class="text-sm text-blue-700"
+                                                        v-if="
+                                                            selectedMainCustomer.credit_limit >
+                                                            0
+                                                        "
+                                                        class="mt-2 p-2 bg-blue-100 rounded"
                                                     >
-                                                        วงเงินคงเหลือ: ฿{{
-                                                            formatPrice(
-                                                                selectedMainCustomer.available_credit
-                                                            )
-                                                        }}
+                                                        <div
+                                                            class="flex items-center mb-1"
+                                                        >
+                                                            <span
+                                                                class="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-500 text-white"
+                                                            >
+                                                                เครดิต
+                                                            </span>
+                                                        </div>
+                                                        <div
+                                                            class="text-xs text-blue-800 space-y-0.5"
+                                                        >
+                                                            <div
+                                                                class="flex justify-between"
+                                                            >
+                                                                <span
+                                                                    >วงเงินเครดิต:</span
+                                                                >
+                                                                <span
+                                                                    class="font-medium"
+                                                                    >฿{{
+                                                                        formatPrice(
+                                                                            selectedMainCustomer.credit_limit
+                                                                        )
+                                                                    }}</span
+                                                                >
+                                                            </div>
+                                                            <div
+                                                                class="flex justify-between text-red-600"
+                                                            >
+                                                                <span
+                                                                    >ยอดค้างชำระ:</span
+                                                                >
+                                                                <span
+                                                                    class="font-medium"
+                                                                    >฿{{
+                                                                        formatPrice(
+                                                                            selectedMainCustomer.current_balance ||
+                                                                                0
+                                                                        )
+                                                                    }}</span
+                                                                >
+                                                            </div>
+                                                            <div
+                                                                class="flex justify-between text-green-700 font-semibold border-t border-blue-200 pt-1 mt-1"
+                                                            >
+                                                                <span
+                                                                    >วงเงินคงเหลือ:</span
+                                                                >
+                                                                <span
+                                                                    >฿{{
+                                                                        formatPrice(
+                                                                            selectedMainCustomer.available_credit
+                                                                        )
+                                                                    }}</span
+                                                                >
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div v-else class="mt-1">
+                                                        <span
+                                                            class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-400 text-white"
+                                                        >
+                                                            เงินสด
+                                                        </span>
                                                     </div>
                                                     <div
                                                         class="text-xs text-blue-600 mt-1"
@@ -1584,7 +1747,9 @@
                                         >
                                     </div>
                                     <!-- Shipping Fee -->
-                                    <div class="flex justify-between items-center">
+                                    <div
+                                        class="flex justify-between items-center"
+                                    >
                                         <span>ค่าจัดส่ง:</span>
                                         <div class="flex items-center">
                                             <span class="mr-1">฿</span>
@@ -2025,7 +2190,7 @@
                                         </div>
                                     </label>
                                     <label
-                                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 border-purple-300 bg-purple-50"
                                         :class="{
                                             'opacity-50 cursor-not-allowed':
                                                 !selectedMainCustomer,
@@ -2034,25 +2199,41 @@
                                         <input
                                             v-model="paymentMethod"
                                             type="radio"
-                                            value="customer_account"
-                                            class="mr-3"
+                                            value="credit"
+                                            class="mr-3 text-purple-600"
                                             :disabled="!selectedMainCustomer"
                                         />
-                                        <div class="flex items-center">
-                                            <span class="text-2xl mr-2"
-                                                >🏢</span
-                                            >
-                                            <span>เครดิต (บัญชีลูกค้า)</span>
+                                        <div class="flex items-center flex-1">
+                                            <span class="text-2xl mr-2">💳</span>
+                                            <div class="flex-1">
+                                                <div class="flex items-center">
+                                                    <span class="font-medium text-purple-700">เครดิต</span>
+                                                    <span class="ml-2 px-2 py-0.5 text-xs bg-purple-600 text-white rounded-full">ค้างชำระ</span>
+                                                </div>
+                                                <div v-if="selectedMainCustomer" class="text-xs text-purple-600 mt-1">
+                                                    <div v-if="selectedMainCustomer.credit_limit > 0">
+                                                        วงเงิน: ฿{{ formatPrice(selectedMainCustomer.credit_limit) }} | 
+                                                        ค้างชำระ: ฿{{ formatPrice(selectedMainCustomer.current_balance || 0) }} | 
+                                                        คงเหลือ: ฿{{ formatPrice(selectedMainCustomer.available_credit) }}
+                                                    </div>
+                                                    <div v-else class="text-orange-600">
+                                                        ลูกค้านี้ยังไม่มีวงเงินเครดิต
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </label>
                                     <div
-                                        v-if="
-                                            !selectedMainCustomer &&
-                                            paymentMethod === 'customer_account'
-                                        "
-                                        class="text-sm text-red-600 ml-6"
+                                        v-if="paymentMethod === 'credit' && !selectedMainCustomer"
+                                        class="text-sm text-red-600 ml-6 p-2 bg-red-50 rounded"
                                     >
-                                        กรุณาเลือกลูกค้าก่อนใช้การชำระแบบเครดิต
+                                        ⚠️ กรุณาเลือกลูกค้าก่อนใช้การชำระแบบเครดิต
+                                    </div>
+                                    <div
+                                        v-else-if="paymentMethod === 'credit' && selectedMainCustomer && selectedMainCustomer.credit_limit > 0 && selectedMainCustomer.available_credit < cartGrandTotal"
+                                        class="text-sm text-orange-600 ml-6 p-2 bg-orange-50 rounded"
+                                    >
+                                        ⚠️ วงเงินเครดิตไม่เพียงพอ (คงเหลือ ฿{{ formatPrice(selectedMainCustomer.available_credit) }}, ต้องการ ฿{{ formatPrice(cartGrandTotal) }})
                                     </div>
                                 </div>
                             </div>
@@ -2095,7 +2276,7 @@
 
                             <!-- Customer Account Selection -->
                             <div
-                                v-if="paymentMethod === 'customer_account'"
+                                v-if="paymentMethod === 'credit'"
                                 class="mb-6"
                             >
                                 <label
@@ -2371,6 +2552,19 @@ const cartGrandTotal = computed(() => {
     return subtotal + tax + shipping;
 });
 
+// Check if customer can use credit payment
+const canUseCredit = computed(() => {
+    if (!selectedMainCustomer.value) return false;
+    if (
+        !selectedMainCustomer.value.credit_limit ||
+        selectedMainCustomer.value.credit_limit <= 0
+    )
+        return false;
+    if (selectedMainCustomer.value.available_credit < cartGrandTotal.value)
+        return false;
+    return true;
+});
+
 const canProcessPayment = computed(() => {
     if (cartItems.value.length === 0) return false;
 
@@ -2388,7 +2582,7 @@ const canProcessPayment = computed(() => {
         return receivedAmount.value >= cartGrandTotal.value;
     }
 
-    if (paymentMethod.value === "customer_account") {
+    if (paymentMethod.value === "credit") {
         return (
             selectedMainCustomer.value &&
             selectedMainCustomer.value.available_credit >= cartGrandTotal.value

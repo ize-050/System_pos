@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class SupplierController extends Controller
 {
@@ -72,7 +72,8 @@ class SupplierController extends Controller
 
         Supplier::create($validated);
 
-        return redirect()->route('suppliers.index')
+        return redirect()
+            ->route('suppliers.index')
             ->with('success', 'เพิ่มซัพพลายเออร์เรียบร้อยแล้ว');
     }
 
@@ -114,7 +115,8 @@ class SupplierController extends Controller
 
         $supplier->update($validated);
 
-        return redirect()->route('suppliers.index')
+        return redirect()
+            ->route('suppliers.index')
             ->with('success', 'อัปเดตข้อมูลซัพพลายเออร์เรียบร้อยแล้ว');
     }
 
@@ -123,11 +125,12 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
-        // Check if supplier has purchase orders
-        // For now, just soft delete by marking inactive
-        $supplier->update(['is_active' => false]);
+        // Mark as inactive (soft delete)
+        $supplier->is_active = false;
+        $supplier->save();
 
-        return redirect()->route('suppliers.index')
+        return redirect()
+            ->route('suppliers.index')
             ->with('success', 'ปิดการใช้งานซัพพลายเออร์เรียบร้อยแล้ว');
     }
 
