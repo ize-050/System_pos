@@ -20,6 +20,7 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StockRequisitionController;
 use App\Http\Controllers\StockRequisitionReportController;
+use App\Http\Controllers\SupplierController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -87,6 +88,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Customer Management Routes (Admin, Manager, and cashier)
     Route::middleware(['role:admin,manager,cashier'])->group(function () {
         Route::resource('customers', CustomerController::class);
+    });
+
+    // Supplier Management Routes (Admin, Manager, Accountant)
+    Route::middleware(['role:admin,manager,accountant'])->group(function () {
+        Route::get('/suppliers/search', [SupplierController::class, 'search'])->name('suppliers.search');
+        Route::resource('suppliers', SupplierController::class);
     });
 
     // Sales Management Routes (Admin, Manager, and Cashier)
